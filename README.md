@@ -4,43 +4,19 @@
 
 ## 目录结构
 
-```
-my-skills/
-├── shared/          ← 所有端共享的 Skills
-├── openclaw/        ← OpenClaw 专属 Skills
-├── claude-code/     ← Claude Code 专属 Skills
-└── codex/           ← Codex 专属 Skills
-```
+每个子目录即一个 Skill，必须包含 `SKILL.md` 文件。各端按需加载。
 
 ## 接入方式
 
-### OpenClaw (VPS)
+### Claude Code / Codex（Mac 本地）
 
-在 `openclaw.json` 中配置 `skills.load.extraDirs`：
+通过 CC Switch 添加本仓库，自动发现并同步所有 Skills。
 
-```json
-{
-  "skills": {
-    "load": {
-      "extraDirs": ["/home/work/.openclaw/my-skills/shared"]
-    }
-  }
-}
-```
+### OpenClaw（VPS）
 
-### Claude Code (本地 Mac)
-
-将 shared skills 目录链接到 Claude Code 的项目 skills 目录。
-
-### Codex (本地 Mac)
-
-类似 Claude Code 的处理方式。
-
-## Git 工作流
-
-- 创建/修改 Skill → git commit + push
-- 其他端 git pull → 自动生效
-- OpenClaw 有 watcher，检测到变化后下次会话自动加载
+1. `git clone` 本仓库到服务器
+2. 在 `openclaw.json` 中配置 `skills.load.extraDirs` 指向 clone 目录
+3. 定期 `git pull` 更新
 
 ## Skill 规范
 
@@ -49,7 +25,14 @@ my-skills/
 ```
 skill-name/
 ├── SKILL.md          ← 必需：frontmatter + 指令
-├── references/       ← 可选：参考文档（按需加载）
+├── references/       ← 可选：参考文档
 ├── scripts/          ← 可选：可执行脚本
+├── prompts/          ← 可选：提示词模板
 └── assets/           ← 可选：模板、图片等资源
 ```
+
+## 编辑工作流
+
+1. 在本地工作副本中编辑 Skill 文件
+2. `git commit && git push`
+3. CC Switch 自动同步 / OpenClaw 定期 pull
