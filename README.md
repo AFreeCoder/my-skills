@@ -4,7 +4,18 @@
 
 ## 目录结构
 
-每个子目录即一个 Skill，必须包含 `SKILL.md` 文件。各端按需加载。
+```
+my-skills/
+├── .claude-plugin/
+│   └── marketplace.json   ← CC Switch 发现 skills 的清单
+├── skills/                ← 所有 skills 存放于此
+│   ├── <skill-name>/
+│   │   └── SKILL.md
+│   └── ...
+└── README.md
+```
+
+各端按需加载。
 
 ## 接入方式
 
@@ -15,7 +26,7 @@
 ### OpenClaw（VPS）
 
 1. `git clone` 本仓库到服务器
-2. 在 `openclaw.json` 中配置 `skills.load.extraDirs` 指向 clone 目录
+2. 在 `openclaw.json` 中配置 `skills.load.extraDirs` 指向 clone 目录下的 `skills/`
 3. 定期 `git pull` 更新
 
 ## Skill 规范

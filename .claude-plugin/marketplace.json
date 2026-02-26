@@ -1,0 +1,46 @@
+{
+  "name": "my-skills",
+  "owner": {
+    "name": "AFreeCoder",
+    "email": "AFreeCoder@users.noreply.github.com"
+  },
+  "metadata": {
+    "description": "集中管理的 AI Agent Skills",
+    "version": "1.0.0"
+  },
+  "plugins": [
+    {
+      "name": "obsidian-skills",
+      "description": "Obsidian 笔记相关 skills",
+      "source": "./",
+      "strict": false,
+      "skills": [
+        "./skills/obsidian-markdown",
+        "./skills/obsidian-bases",
+        "./skills/json-canvas",
+        "./skills/daily"
+      ]
+    },
+    {
+      "name": "content-skills",
+      "description": "内容创作相关 skills",
+      "source": "./",
+      "strict": false,
+      "skills": [
+        "./skills/content-writing",
+        "./skills/baoyu-article-illustrator"
+      ]
+    },
+    {
+      "name": "utility-skills",
+      "description": "工具类 skills",
+      "source": "./",
+      "strict": false,
+      "skills": [
+        "./skills/git-auto-commit",
+        "./skills/webpage-clipper",
+        "./skills/gpt101-dashboard-renew"
+      ]
+    }
+  ]
+}
