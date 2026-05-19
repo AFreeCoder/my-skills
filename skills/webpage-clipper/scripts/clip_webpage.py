@@ -586,6 +586,22 @@ def _to_markdown(html: str) -> str:
         return h.handle(html)
 
 
+def _clean_markdown_body(markdown: str, base_url: str) -> str:
+    if "mp.weixin.qq.com" not in base_url:
+        return markdown.strip()
+    tail_markers = [
+        "\n![赞赏二维码]",
+        "\n微信扫一扫赞赏作者",
+        "\n赞赏后展示我的头像",
+    ]
+    cut_at = len(markdown)
+    for marker in tail_markers:
+        idx = markdown.find(marker)
+        if idx >= 0:
+            cut_at = min(cut_at, idx)
+    return markdown[:cut_at].strip()
+
+
 def _rewrite_images(
     html: str,
     base_url: str,
@@ -702,8 +718,8 @@ def main() -> int:
     parser.add_argument("--url", required=True, help="网页 URL")
     parser.add_argument(
         "--out-dir",
-        default=str(DEFAULT_VAULT_PATH / "00_Inbox"),
-        help="输出目录（默认 Obsidian 00_Inbox）",
+        default=str(DEFAULT_VAULT_PATH / "10_raw"),
+        help="输出目录（默认 Obsidian 10_raw）",
     )
     parser.add_argument(
         "--assets-dir",
@@ -773,14 +789,18 @@ def main() -> int:
         args.timeout,
         args.user_agent,
     )
-    markdown_body = _to_markdown(rewritten_html).strip()
+    markdown_body = _clean_markdown_body(_to_markdown(rewritten_html), args.url)
 
     parts = []
     if not args.no_frontmatter:
+        captured_at = _dt.datetime.now().strftime("%Y-%m-%d")
         parts.append("---")
         parts.append(f"title: {safe_title}")
-        parts.append(f"source: {args.url}")
-        parts.append(f"clipped_at: {_dt.datetime.now().isoformat()}")
+        parts.append(f"captured_at: {captured_at}")
+        parts.append("source_type: web")
+        parts.append(f"source_url: {args.url}")
+        parts.append("status: raw")
+        parts.append("projects: []")
         parts.append("---\n")
     if insert_title and not cover_present:
         parts.append(f"# {safe_title}\n")

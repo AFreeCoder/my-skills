@@ -9,7 +9,7 @@ description: 将网页 URL 剪裁/保存为本地 Markdown 并下载图片。用
 
 ## 快速开始
 
-1. 默认输出到 Obsidian 根目录 `00_Inbox`，图片输出到根目录 `assets`。
+1. 默认输出到 Obsidian 根目录 `10_raw`，图片输出到根目录 `assets`。
 2. 运行脚本 `scripts/clip_webpage.py`。
 3. 遇到动态页面优先使用 `--engine browser`。
 
@@ -33,26 +33,26 @@ playwright install
 ## 典型用法
 
 ```bash
-python /Users/afreecoder/.codex/skills/webpage-clipper/scripts/clip_webpage.py \
+python /Users/afreecoder/.cc-switch/skills/webpage-clipper/scripts/clip_webpage.py \
   --url "https://example.com" \
-  --out-dir "/path/to/notes"
+  --out-dir "/path/to/notes/10_raw"
 ```
 
 指定图片目录（适合 Obsidian 统一 assets 目录）：
 
 ```bash
-python /Users/afreecoder/.codex/skills/webpage-clipper/scripts/clip_webpage.py \
+python /Users/afreecoder/.cc-switch/skills/webpage-clipper/scripts/clip_webpage.py \
   --url "https://example.com" \
-  --out-dir "/path/to/notes/20_Area" \
+  --out-dir "/path/to/notes/10_raw" \
   --assets-dir "/path/to/notes/assets"
 ```
 
 动态页面：
 
 ```bash
-python /Users/afreecoder/.codex/skills/webpage-clipper/scripts/clip_webpage.py \
+python /Users/afreecoder/.cc-switch/skills/webpage-clipper/scripts/clip_webpage.py \
   --url "https://example.com" \
-  --out-dir "/path/to/notes" \
+  --out-dir "/path/to/notes/10_raw" \
   --engine browser
 ```
 
@@ -60,14 +60,14 @@ python /Users/afreecoder/.codex/skills/webpage-clipper/scripts/clip_webpage.py \
 
 - Markdown 文件名来自网页标题（去除非法字符）。
 - 默认图片目录为 Obsidian 根目录 `assets`（如需其他路径用 `--assets-dir`）。
-- 默认写入 YAML frontmatter（`title`/`source`/`clipped_at`）与一级标题。
+- 默认写入 `10_raw` 原典区 YAML frontmatter（`title`/`captured_at`/`source_type`/`source_url`/`status`/`projects`）。
 - 若 Readability 结果缺失列表或图片，会自动回退到 `article/main/body` 以提高内容完整性。
 - 对于 `mp.weixin.qq.com` 这类有环境校验的页面，若 requests 返回验证页，将自动切到浏览器引擎再抓取。
 
 ## 参数说明
 
 - `--url`：网页地址（必填）。
-- `--out-dir`：Markdown 输出目录（默认 `OBSIDIAN_VAULT/00_Inbox`）。
+- `--out-dir`：Markdown 输出目录（默认 `OBSIDIAN_VAULT/10_raw`）。
 - `--assets-dir`：图片输出目录（默认 `OBSIDIAN_VAULT/assets`）。
 - `--title`：标题覆盖。
 - `--engine`：`requests` 或 `browser`。
