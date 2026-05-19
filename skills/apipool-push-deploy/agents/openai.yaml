@@ -1,0 +1,4 @@
+interface:
+  display_name: "APIPool Push Deploy"
+  short_description: "推送 APIPool 代码并核验自动部署、备份与回滚"
+  default_prompt: "Use $apipool-push-deploy to review APIPool deployment risk, push code, and monitor DigitalOcean rollout."

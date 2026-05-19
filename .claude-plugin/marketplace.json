@@ -6,20 +6,53 @@
   },
   "metadata": {
     "description": "集中管理的自建 AI Agent Skills",
-    "version": "1.0.0"
+    "version": "1.1.0"
   },
   "plugins": [
     {
       "name": "my-skills",
-      "description": "自建 Skills 合集：日记、Git 提交、网页剪裁、内容写作、Dashboard 更新",
+      "description": "自建 Skills 合集：飞书、Obsidian、APIPool、网页剪裁、内容写作、Git 工作流等",
       "source": "./",
       "strict": false,
       "skills": [
-        "./skills/daily",
-        "./skills/git-auto-commit",
-        "./skills/webpage-clipper",
+        "./skills/apipool-push-deploy",
+        "./skills/apipool-sync-upstream",
+        "./skills/baoyu-article-illustrator",
+        "./skills/chronicle",
+        "./skills/claude-to-im",
         "./skills/content-writing",
-        "./skills/gpt101-dashboard-renew"
+        "./skills/daily",
+        "./skills/frontend-design",
+        "./skills/git-auto-commit",
+        "./skills/gpt101-dashboard-renew",
+        "./skills/json-canvas",
+        "./skills/lark-approval",
+        "./skills/lark-attendance",
+        "./skills/lark-base",
+        "./skills/lark-calendar",
+        "./skills/lark-contact",
+        "./skills/lark-doc",
+        "./skills/lark-drive",
+        "./skills/lark-event",
+        "./skills/lark-im",
+        "./skills/lark-mail",
+        "./skills/lark-markdown",
+        "./skills/lark-minutes",
+        "./skills/lark-okr",
+        "./skills/lark-openapi-explorer",
+        "./skills/lark-shared",
+        "./skills/lark-sheets",
+        "./skills/lark-skill-maker",
+        "./skills/lark-slides",
+        "./skills/lark-task",
+        "./skills/lark-vc",
+        "./skills/lark-whiteboard",
+        "./skills/lark-wiki",
+        "./skills/lark-workflow-meeting-summary",
+        "./skills/lark-workflow-standup-report",
+        "./skills/obsidian-bases",
+        "./skills/obsidian-markdown",
+        "./skills/webpage-clipper"
       ]
     }
   ]

@@ -169,6 +169,87 @@ def _promote_inline_styles(soup) -> None:
         span.replace_with(root)
 
 
+_PSEUDO_LIST_ORDERED_RE = re.compile(r"^\s*(\d{1,3}|[A-Za-z])[.、)]\s*$")
+_PSEUDO_LIST_BULLET_RE = re.compile(
+    r"^\s*[•●○■□◆◇·▪▫•○●■□◆◇·*\-]\s*$"
+)
+
+
+def _promote_pseudo_lists(soup) -> None:
+    """Convert WeChat-style flex pseudo-lists into real <ol>/<ul>.
+
+    WeChat editors render numbered/bulleted items as one flex <section> per item:
+        <section style="display:flex"><span>1.</span><p>content</p></section>
+    Adjacent sections like this are siblings, not children of a single <ol>.
+    Markdownify renders them as marker + blank line + content, breaking the list.
+    Detect runs of such siblings under the same parent and replace them with a
+    real <ol>/<ul> wrapping the content portions in <li>.
+    """
+
+    def classify(section):
+        if getattr(section, "name", None) != "section":
+            return None, None
+        style = (section.get("style") or "").lower().replace(" ", "")
+        if "display:flex" not in style:
+            return None, None
+        children = [c for c in section.children if getattr(c, "name", None)]
+        if len(children) < 2:
+            return None, None
+        marker_text = children[0].get_text(" ", strip=True)
+        if not marker_text or len(marker_text) > 4:
+            return None, None
+        if _PSEUDO_LIST_ORDERED_RE.match(marker_text):
+            return "ol", children[1:]
+        if _PSEUDO_LIST_BULLET_RE.match(marker_text):
+            return "ul", children[1:]
+        return None, None
+
+    seen_parents = set()
+    for section in list(soup.find_all("section")):
+        if section.parent is None:
+            continue
+        kind, _ = classify(section)
+        if kind is None:
+            continue
+        parent = section.parent
+        if id(parent) in seen_parents:
+            continue
+        seen_parents.add(id(parent))
+
+        kids = [c for c in parent.children if getattr(c, "name", None)]
+        i = 0
+        while i < len(kids):
+            k1, _ = classify(kids[i])
+            if k1 is None:
+                i += 1
+                continue
+            j = i
+            items = []
+            while j < len(kids):
+                k2, body = classify(kids[j])
+                if k2 != k1:
+                    break
+                items.append((kids[j], body))
+                j += 1
+            if len(items) >= 2:
+                new_list = soup.new_tag(k1)
+                for _, body in items:
+                    li = soup.new_tag("li")
+                    for node in list(body):
+                        li.append(node.extract())
+                    new_list.append(li)
+                items[0][0].replace_with(new_list)
+                for orig, _ in items[1:]:
+                    orig.decompose()
+                kids = [c for c in parent.children if getattr(c, "name", None)]
+                if new_list in kids:
+                    i = kids.index(new_list) + 1
+                else:
+                    i = j
+            else:
+                i = j if j > i else i + 1
+
+
 def _promote_blockquotes(soup) -> None:
     for element in list(soup.find_all(["section", "div", "p"])):
         if element.name == "blockquote":
@@ -226,6 +307,44 @@ def _image_url_key(url: str) -> str:
         return ""
     parsed = urlparse(url)
     return f"{parsed.netloc}{parsed.path}"
+
+
+_BAD_TITLES = {"微信公众平台", "微信公众号", "微信", "wechat", "404", "page not found"}
+
+
+def _extract_meta_title(html: str) -> Optional[str]:
+    try:
+        from bs4 import BeautifulSoup
+    except ImportError:
+        return None
+    soup = BeautifulSoup(html, "html.parser")
+    for attrs in (
+        {"property": "og:title"},
+        {"name": "twitter:title"},
+        {"itemprop": "headline"},
+    ):
+        meta = soup.find("meta", attrs=attrs)
+        content = meta.get("content").strip() if meta and meta.get("content") else None
+        if content:
+            return content
+    for selector_id in ("activity-name", "title"):
+        el = soup.find(id=selector_id)
+        if el:
+            text = el.get_text(" ", strip=True)
+            if text:
+                return text
+    return None
+
+
+def _filter_title(title: Optional[str]) -> Optional[str]:
+    if not title:
+        return None
+    cleaned = title.strip()
+    if not cleaned:
+        return None
+    if cleaned.strip().lower() in _BAD_TITLES:
+        return None
+    return cleaned
 
 
 def _extract_cover_image(html: str, base_url: str) -> Optional[str]:
@@ -558,6 +677,7 @@ def _preprocess_html(html: str, base_url: str) -> str:
     _normalize_inline_wrappers(soup)
     _ensure_picture_img(soup, base_url)
     _convert_inline_svg(soup)
+    _promote_pseudo_lists(soup)
     _promote_blockquotes(soup)
     _promote_inline_styles(soup)
     return str(soup)
@@ -613,7 +733,14 @@ def main() -> int:
     content_table_len = _table_text_length(content_html)
     if pre_table_len >= 20 and content_table_len < max(5, int(pre_table_len * 0.2)):
         content_html = _fallback_body(pre_html, args.url)
-    title = args.title or content_title or browser_title or args.url
+    meta_title = _extract_meta_title(html)
+    title = (
+        args.title
+        or _filter_title(meta_title)
+        or _filter_title(content_title)
+        or _filter_title(browser_title)
+        or args.url
+    )
     safe_title = _safe_filename(title)
     slug = _slugify(title)
     insert_title = bool(args.with_heading)

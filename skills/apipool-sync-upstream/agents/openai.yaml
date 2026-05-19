@@ -1,0 +1,4 @@
+interface:
+  display_name: "APIPool Upstream Sync"
+  short_description: "审慎同步 APIPool upstream/main 并完成评估、测试与总结"
+  default_prompt: "Use $apipool-sync-upstream to 同步当前仓库的 upstream/main，评估业务影响、完成合入测试，并输出评审总结。"
