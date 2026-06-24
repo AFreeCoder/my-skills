@@ -50,6 +50,7 @@
         "./skills/lark-wiki",
         "./skills/lark-workflow-meeting-summary",
         "./skills/lark-workflow-standup-report",
+        "./skills/multi-agent-design-review",
         "./skills/multi-agent-dev-iteration",
         "./skills/obsidian-bases",
         "./skills/obsidian-markdown",
