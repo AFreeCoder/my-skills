@@ -1,0 +1,9 @@
+{
+  "verdict": "approve",
+  "summary": "x",
+  "findings": [
+    {"id":"F1","severity":"critical","category":"testing","title":"t","detail":"d","anchor":"a:1","confidence":0.5,"recommendation":"r"}
+  ],
+  "prior_findings_status": [],
+  "open_questions": []
+}

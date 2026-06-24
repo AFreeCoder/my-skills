@@ -1,0 +1,9 @@
+{
+  "verdict": "needs-revision",
+  "summary": "x",
+  "findings": [
+    {"id":"F1","severity":"major","category":"testing","title":"t","detail":"d","confidence":0.5,"recommendation":"r"}
+  ],
+  "prior_findings_status": [],
+  "open_questions": []
+}
