@@ -31,7 +31,7 @@
 **minor(改进项)**
 不阻塞迭代,也不参与收敛计数。minor 是"更好但不是必须"的改进意见:代码风格、文档补充、命名优化、非关键路径的轻微低效等。minor 不得单独阻止工件推进,评审者在产出 minor finding 时应说明"这是改进建议,不是必须修复"。主笔可选择性采纳,未采纳的 minor 进入「已知债务」列表备案。
 
-**关于 category 字段:**`category` 是对 finding 领域属性的进一步分类(例如 dev skill 中可能有 `logic`、`security`、`test-coverage`、`performance` 等)。具体 `category` 取值与领域示例由各 skill 在自己的评审提示词里补充。本内核不强制枚举,以保持通用性。
+**关于 category 字段:**`category` 是对 finding 领域属性的进一步分类(例如 dev skill 中可能有 `logic`、`security`、`test-coverage`、`performance` 等)。具体 `category` 取值与领域示例由各 skill 在自己的评审提示词里补充。本内核不强制枚举,以保持通用性。冒烟校验层仅要求 `category` 为非空字符串,具体取值由各 skill 自行约束。
 
 ---
 
@@ -45,7 +45,7 @@
 
 **`confidence` 字段要求如实填写。**`confidence` 是 0 到 1 之间的浮点数,表示评审者对该 finding 成立的把握程度。当 finding 依赖推断(例如评审者无法直接看到某段逻辑,只能从上下文推测)时,`confidence` 应相应降低,不得虚报高置信度。宿主 skill 可以根据 `confidence` 决定是否要求评审者提供更多证据再决策。
 
-**`prior_findings_status` 字段追踪上一轮 finding 的处置情况。**从第二轮起,每次评审必须对上一轮的所有 blocker 和 major finding 逐条给出状态:`resolved`(已解决,附证据)、`partially_resolved`(部分解决,说明剩余问题)或 `unresolved`(未解决,说明原因)。这是净进展判定的数据来源。
+**`prior_findings_status` 字段追踪上一轮 finding 的处置情况。**从第二轮起,每次评审必须对上一轮的所有 blocker 和 major finding 逐条给出状态:`resolved`(已解决,附证据)、`partially_resolved`(部分解决,说明剩余问题)或 `unresolved`(未解决,说明原因)。`evidence` 字段在三种状态下均为**必填非空字符串**(`resolved` 时说明解决依据,`partially_resolved` 时说明已解决的部分与剩余问题,`unresolved` 时说明未解决的原因);不得留空或省略。这是净进展判定的数据来源。
 
 ---
 
