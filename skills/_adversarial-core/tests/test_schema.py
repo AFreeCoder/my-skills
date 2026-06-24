@@ -1,10 +1,12 @@
-import json, sys, os, subprocess
+import json, sys, os
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 SCHEMA = os.path.join(HERE, "..", "review-schema.json")
 FIX = os.path.join(HERE, "fixtures")
 
-def load(p): return json.load(open(p))
+def load(p):
+    with open(p) as fh:
+        return json.load(fh)
 
 def validate(inst):
     """返回 True=合法。优先用 jsonschema;无则回退关键字段冒烟校验。"""
@@ -23,6 +25,17 @@ def validate(inst):
                 if not f.get(req): return False
             c = f.get("confidence")
             if not isinstance(c,(int,float)) or not (0 <= c <= 1): return False
+        # Validate summary: must be a non-empty string
+        if not (isinstance(inst.get("summary"), str) and inst.get("summary")): return False
+        # Validate prior_findings_status: each item must be a dict with id, status, evidence
+        for pf in inst.get("prior_findings_status", []):
+            if not isinstance(pf, dict): return False
+            if not (isinstance(pf.get("id"), str) and pf.get("id")): return False
+            if pf.get("status") not in ("resolved", "partially_resolved", "unresolved"): return False
+            if not (isinstance(pf.get("evidence"), str) and pf.get("evidence")): return False
+        # Validate open_questions: each item must be a non-empty string
+        for oq in inst.get("open_questions", []):
+            if not (isinstance(oq, str) and oq): return False
         return True
     except Exception:
         return False
