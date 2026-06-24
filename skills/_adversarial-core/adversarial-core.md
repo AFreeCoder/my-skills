@@ -37,7 +37,9 @@
 
 ## 结构化评审输出
 
-评审 agent 的每次评审必须输出符合 `assets/review-schema.json`(与本文件位于同一 skill 目录下)的合法 JSON,不接受自由文本或非 JSON 格式的评审结论。结构化格式的存在意义在于:使主笔 agent 和宿主 skill 能够机械地解析评审结果、追踪 prior finding 状态、进行收敛判定,而无需依赖语义理解。
+评审 agent 的每次评审必须输出符合 `assets/review-schema.json`(该路径相对 skill 根目录;母本同步后副本即位于各 skill 的 `assets/review-schema.json`)的合法 JSON,不接受自由文本或非 JSON 格式的评审结论。结构化格式的存在意义在于:使主笔 agent 和宿主 skill 能够机械地解析评审结果、追踪 prior finding 状态、进行收敛判定,而无需依赖语义理解。
+
+评审输出的顶层字段:`verdict`(approve / needs-revision)、`summary`(一句 ship / no-ship 式总评)、`findings`、`prior_findings_status`、`open_questions`。
 
 **`anchor` 字段是评审有效性的最低门槛。**每条 finding 必须携带 `anchor`,用于精确定位被评审的目标。根据领域不同,`anchor` 的形式可以是:文件路径+行号(`src/api/user.ts:42`)、接口/方法名(`UserService.createUser`)、数据流节点(`input→validate→persist`)、或测试用例名(`test: 用户注册成功路径`)。**没有 `anchor` 的 finding 视为无效评审**,主笔有权拒绝响应,宿主 skill 有权将其排除在收敛计数之外。这条规则的目的是防止评审 agent 产出空洞的、无法定位的泛泛批评。
 
@@ -119,6 +121,7 @@
 若无 JSON Schema 工具可用,至少执行以下冒烟检查,任一失败均视为评审无效:
 - `verdict` 字段存在,且值为 `"approve"` 或 `"needs-revision"` 之一。
 - `findings`、`prior_findings_status`、`open_questions` 均为列表类型(即使为空列表也可接受)。
-- `findings` 中每条 finding 的 `severity` 值为 `"blocker"`、`"major"` 或 `"minor"` 之一,且 `id`、`anchor`、`recommendation` 均为非空字符串。
+- `summary` 字段存在且为非空字符串。
+- `findings` 中每条 finding 的 `severity` 值为 `"blocker"`、`"major"` 或 `"minor"` 之一,`confidence` 为 0 到 1 之间的浮点数,且 `id`、`category`、`title`、`detail`、`anchor`、`recommendation` 均为非空字符串。
 
 **强制约束(任一层次均适用):**若上一轮存在 blocker 或 major 的 finding,且本轮的 `prior_findings_status` 中该 finding 的状态为非 `resolved`,但本轮 `verdict` 却为 `approve`——则**无论 schema 校验是否通过,该评审结论违反终止规则,视为无效**。宿主 skill 必须拒绝该 `approve` 判定,将情况记录为"评审逻辑矛盾",并触发软规则上交人类,因为这表明评审 agent 出现了自相矛盾的行为。
