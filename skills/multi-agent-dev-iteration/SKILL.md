@@ -61,12 +61,10 @@ description: >-
 
 ## 终止条件
 
-每个 step 的收敛判定：
-
-- **GO**：无 blocker、无 major，单测全绿 → 进入下一 step。
-- **上交人类**：达到硬上限（单 step 迭代 **K = 2** 轮后仍有 blocker/major，或累计跨 step 重写 **M = 5** 次）→ Orchestrator 冻结状态、输出上交报告，等待人类干预。
-
-整体通过条件：全部 step 均为 GO → 进入阶段 5 人类合并检查点。硬上限触发机制详见 `references/adversarial-core.md`。
+- **GO**：无 blocker/major 且单测绿 → 该 step 完成，进下一 step。
+- **上交人类**：在**单个 step 内**连续 K = 2 轮无净进展、或达到该 step 的硬上限 M = 5 轮、或主笔与评审存在持续分歧 → Orchestrator 停止该 step、输出上交报告等待人类干预。
+- **阈值按 step 分别计，step 之间互不累加**；机制详见 `references/adversarial-core.md`。
+- **整体**：所有 step 均 GO 才进入合并检查点②。
 
 ---
 
