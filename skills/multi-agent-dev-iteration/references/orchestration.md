@@ -60,7 +60,15 @@ mkdir -p "$REPO_ROOT/docs/dev/<feature>/.author" "$REPO_ROOT/docs/dev/<feature>/
 
 每个 step 的代码实现由 **Codex** 完成，但不允许 Orchestrator 直接裸跑 `codex exec`（原因见 `references/adversarial-core.md`「看门狗 / 存活监控」节）。Orchestrator 必须分发一个**看门狗 Claude subagent**（Agent tool，general-purpose 类型），由它以**前台同步方式**运行 Codex，监控退出码和产物，并向 Orchestrator 回报明确结论。
 
-在分发看门狗子 agent 前，Orchestrator 先将本轮 prompt 写入 `.author/step-<N>-prompt.md`：按 `references/codex-author-prompt.md` 模板，填入本 step 目标、DESIGN 相关章节、worktree 路径，以及（复评轮时）上一轮 findings 与处理结论；首轮删除复评轮附加要求节，不留空占位符。
+在分发看门狗子 agent 前，Orchestrator 先记录本 step 的基准提交：
+
+```bash
+STEP_BASE=$(git -C "$WT" rev-parse HEAD)
+```
+
+此时 `dev/<feature>` 分支上的 HEAD 即为本 step 开始前的状态。Codex 在 worktree 中执行时，可能在该分支上创建一个或多个新提交；`STEP_BASE` 用于后续阶段 2 精确计算本 step 引入的全部变更（包括 Codex 已提交的变更）。
+
+随后 Orchestrator 将本轮 prompt 写入 `.author/step-<N>-prompt.md`：按 `references/codex-author-prompt.md` 模板，填入本 step 目标、DESIGN 相关章节、worktree 路径，以及（复评轮时）上一轮 findings 与处理结论；首轮删除复评轮附加要求节，不留空占位符。
 
 **看门狗 subagent 执行的核心命令：**
 
@@ -88,13 +96,15 @@ Orchestrator 收到看门狗回报后：若成功，继续进入阶段 2；若�
 
 **Orchestrator 向评审 subagent 传入的材料（所有路径均为绝对路径）：**
 
-- `git -C "$WT" diff` 的输出（本 step 迄今的全量 diff）
+- `git -C "$WT" diff "$STEP_BASE"..HEAD` 的输出（本 step 从基准提交到当前 HEAD 的全量 diff，涵盖 Codex 已提交的变更及任何未提交的残余变更；与阶段 5 的 `main...dev/<feature>` range-diff 风格一致）
 - `docs/design/<feature>/DESIGN.md` 中本 step 涉及的相关章节文本
 - 本 step 目标描述（来自 writing-plans 计划）
 - Codex 回报中的测试运行结果（命令 + 退出码 + stdout/stderr 摘录）
-- 上一轮评审 JSON 的绝对路径 `.review/step-<N>-round-<R-1>.json`（复评轮时必填；首轮传空）
+- 上一轮评审 JSON 的**绝对路径** `$REPO_ROOT/docs/dev/<feature>/.review/step-<N>-round-<R-1>.json`（复评轮时必填；首轮传空）
 
-评审 subagent 按 `references/claude-review-prompt.md` 模板执行评审，输出严格符合 `assets/review-schema.json` 的 JSON，写入 `.review/step-<N>-round-<R>.json`。
+> **注意**：评审 subagent 是无 cwd 上下文的全新 agent，Orchestrator 必须在 prompt 中传入所有状态文件的**绝对路径**（含 `$REPO_ROOT/docs/dev/<feature>/.review/`、`$REPO_ROOT/docs/dev/<feature>/dev-log.md`、`$REPO_ROOT/docs/dev/<feature>/.author/` 下的相关文件），不得使用相对路径。
+
+评审 subagent 按 `references/claude-review-prompt.md` 模板执行评审，输出严格符合 `assets/review-schema.json` 的 JSON。评审 JSON 的落盘方式二选一：若宿主已向评审 subagent 授予 Write tool，由评审 subagent 直接将 JSON **写入** `$REPO_ROOT/docs/dev/<feature>/.review/step-<N>-round-<R>.json`；若宿主无法为 subagent 授予文件写入权限，则 Orchestrator 从评审 subagent 的返回消息中提取 JSON 内容，由 Orchestrator 自行写入该绝对路径。无论采用哪种方式，**JSON 文件必须在下一步输出校验运行前已落盘到该绝对路径**。
 
 **Orchestrator 在使用评审结果前必须执行「输出校验」**（见 `adversarial-core.md`「输出校验」节），复用与 `_adversarial-core/tests/test_schema.py` 相同的校验逻辑：
 
@@ -112,10 +122,13 @@ Orchestrator 收到看门狗回报后：若成功，继续进入阶段 2；若�
 
 **传给 Codex 的材料必须包含（所有路径均为绝对路径）：**
 
-- 本轮评审 JSON：`.review/step-<N>-round-<R>.json`（包含所有 findings 与 prior_findings_status）
-- 当前 `dev-log.md` 中本 step 的迭代历史
+- 本轮评审 JSON：`$REPO_ROOT/docs/dev/<feature>/.review/step-<N>-round-<R>.json`（包含所有 findings 与 prior_findings_status）
+- 当前迭代日志：`$REPO_ROOT/docs/dev/<feature>/dev-log.md` 中本 step 的迭代历史
+- 当前 step 的 prompt 文件：`$REPO_ROOT/docs/dev/<feature>/.author/step-<N>-prompt.md`（供 Codex 了解历轮修订累积上下文）
 - DESIGN 相关章节（与阶段 2 相同部分）
 - 上一轮 Codex 回报中的「关键决策」与「仍存疑点」
+
+> **注意**：分诊修订时同样分发全新的看门狗 subagent，该 subagent 没有任何会话记忆，Orchestrator 必须在 prompt 中传入上述所有文件的**绝对路径**，不得依赖相对路径或隐含上下文。
 
 Codex 按 `references/codex-author-prompt.md`「复评轮附加要求」节逐条处置每条 finding：
 
