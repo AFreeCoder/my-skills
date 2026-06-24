@@ -9,7 +9,7 @@
   - 连续 k 轮无净进展 → escalate:no-progress;R 达硬上限 m → escalate:hard-cap;分歧由外部 --disagreement 传入
 判定优先级: complete > disagreement > hard-cap > no-progress > continue
 """
-import argparse, json
+import argparse, json, sys
 
 def bm_count(rnd):
     return sum(1 for f in rnd.get("findings", []) if f.get("severity") in ("blocker", "major"))
@@ -35,6 +35,8 @@ def decide(rounds, k, m, disagreement):
         return "escalate:disagreement"
     if R >= m:
         return "escalate:hard-cap"
+    # 第 1 轮始终是进展基线；当 R==k 时，窗口 flags[R-k:] 包含第 1 轮。
+    # 例如 k=2 需要 >=3 轮才能触发 no-progress（第 1 轮基线 + 最后 2 轮无进展）。
     if R >= k:
         flags = [net_progress(rounds[i], rounds[i - 1] if i > 0 else None) for i in range(R)]
         if not any(flags[R - k:]):
@@ -48,7 +50,14 @@ def main():
     ap.add_argument("--m", type=int, default=5)
     ap.add_argument("--disagreement", action="store_true")
     a = ap.parse_args()
-    rounds = [json.load(open(p)) for p in a.rounds]
+    rounds = []
+    for p in a.rounds:
+        try:
+            with open(p) as fh:
+                rounds.append(json.load(fh))
+        except (FileNotFoundError, json.JSONDecodeError) as e:
+            print(f"progress-check: 无法读取/解析 {p}: {e}", file=sys.stderr)
+            sys.exit(2)
     print(decide(rounds, a.k, a.m, a.disagreement))
 
 if __name__ == "__main__":
