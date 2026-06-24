@@ -5,7 +5,7 @@ description: >-
   由 Codex 在隔离 worktree(workspace-write 降权)里 TDD 主笔实现、独立 Claude 只读
   评审,收敛判定+硬上限迭代到每步无 blocker/major 且单测绿,产出实现代码(隔离分支)
   + dev-log,合回主干前交人类。当用户已有冻结设计与实现计划、要进入编码,并表达
-  "按设计实现""让 Codex 写代码 Claude 评审""TDD 落地""逐步实现并评审"时触发。
+  "按设计实现""让 Codex 写代码 Claude 评审""TDD 落地""逐步实现并评审""开始写代码""开始实现"时触发。
 ---
 
 ## 角色模型
@@ -39,7 +39,7 @@ description: >-
 
 - **写⊥审**：Author 与 Reviewer 角色严格隔离，Reviewer 无代码写权限，防止互相污染。
 - **文件驱动**：所有决策通过结构化文件（评审报告、dev-log）传递，不依赖对话上下文。
-- **分级处理**：发现项按 blocker / major / minor 三级处理；Orchestrator 不得私自将 blocker 降级。
+- **分级处理**：发现项按 blocker / major / minor 三级处理；Orchestrator 不得私自将 blocker/major 降级，主笔(Codex)亦不得单方面调低 finding severity——分歧一律上交人类。
 - **反作弊/看门狗**：超出硬上限时强制上交人类，不允许无限迭代掩盖根本问题。
 - **隔离执行**：Codex 始终在隔离 worktree 的独立分支上操作，workspace-write 降权，不直接触碰主干。
 - **人类检查点**：流程头部（确认输入冻结）和尾部（合并前）各设一个强制人类检查点。
