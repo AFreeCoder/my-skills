@@ -52,6 +52,7 @@
         "./skills/lark-workflow-standup-report",
         "./skills/multi-agent-design-review",
         "./skills/multi-agent-dev-iteration",
+        "./skills/multi-agent-test-iteration",
         "./skills/obsidian-bases",
         "./skills/obsidian-markdown",
         "./skills/webpage-clipper"
