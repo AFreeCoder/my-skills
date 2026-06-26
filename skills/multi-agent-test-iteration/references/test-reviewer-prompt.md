@@ -77,7 +77,9 @@
 | `summary` | 字符串 | 一句 ship / no-ship 式总评，非空 |
 | `findings` | 数组 | 当轮未解决/新增 finding；首轮所有 finding |
 | `prior_findings_status` | 数组 | 首轮为空数组；复评轮必须逐条列出上轮所有 blocker/major |
-| `open_questions` | 数组 | 当前上下文无法客观验证的疑点；无则空数组 |
+| `open_questions` | 数组 | 当前上下文无法客观验证的疑点；**元素为字符串**；无则空数组 |
+
+> ⚠️ **字面值硬约束（务必遵守，否则 Orchestrator 输出校验会判该评审无效）：** `verdict` 只能取 `"approve"` 或 `"needs-revision"` 之一——**不得**用 `REJECT` / `PASS` / `reject` 等同义词；每条 finding 的 `severity` 只能取 `"blocker"` / `"major"` / `"minor"` 之一——**不得**用 `critical` / `high` / `medium` / `low` 等同义词；`open_questions` 是**字符串数组**，不是对象数组。如实判断后必须映射到这些固定字面值，不要自创枚举。
 
 **每条 finding 必须携带以下字段（缺任一字段视为无效）：**
 
