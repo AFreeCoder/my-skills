@@ -11,7 +11,7 @@
   "plugins": [
     {
       "name": "my-skills",
-      "description": "自建 Skills 合集：飞书、Obsidian、APIPool、网页剪裁、内容写作、Git 工作流等",
+      "description": "Skills 合集：飞书、Obsidian、APIPool、部署、网页剪裁等",
       "source": "./",
       "strict": false,
       "skills": [
@@ -20,11 +20,7 @@
         "./skills/baoyu-article-illustrator",
         "./skills/chronicle",
         "./skills/claude-to-im",
-        "./skills/content-writing",
-        "./skills/daily",
         "./skills/frontend-design",
-        "./skills/git-auto-commit",
-        "./skills/gpt101-dashboard-renew",
         "./skills/json-canvas",
         "./skills/lark-approval",
         "./skills/lark-attendance",
@@ -50,11 +46,9 @@
         "./skills/lark-wiki",
         "./skills/lark-workflow-meeting-summary",
         "./skills/lark-workflow-standup-report",
-        "./skills/multi-agent-design-review",
-        "./skills/multi-agent-dev-iteration",
-        "./skills/multi-agent-test-iteration",
         "./skills/obsidian-bases",
         "./skills/obsidian-markdown",
+        "./skills/push-deploy",
         "./skills/webpage-clipper"
       ]
     }

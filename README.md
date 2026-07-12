@@ -17,7 +17,7 @@ my-skills/
 
 ## 当前收录
 
-当前共收录 `38` 个 skill。
+当前共收录 `35` 个 skill。
 
 | Skill | 说明 |
 | --- | --- |
@@ -26,11 +26,7 @@ my-skills/
 | `baoyu-article-illustrator` | Analyzes article structure, identifies positions requiring visual aids, generates illustrations with Type × Style two... |
 | `chronicle` | Allows you to view the user's screen as well as several hours of history. Use when the user makes a reference to thei... |
 | `claude-to-im` | Bridge THIS Claude Code or Codex session to Telegram, Discord, Feishu/Lark, QQ, or WeChat so the user can chat with C... |
-| `content-writing` | AI辅助内容写作工作流：从选题到发布的完整流程。用于：(1) 写公众号/知乎/小红书/V2EX等平台的文章，(2) 将母版内容适配到不同平台，(3) 文章审校和降AI味，(4) 选题讨论和内容规划。触发词：写文章、写内容、适配平台、审... |
-| `daily` | 将当前会话的工作内容汇总写入 Obsidian 日记（90_Daily/YYYY-MM-DD.md）。当用户要求记录/汇总当天工作、写入每日流水时使用；每次追加写入，若日记文件不存在则按 Daily Note 模板创建。 |
 | `frontend-design` | Create distinctive, production-grade frontend interfaces with high design quality. Use this skill when the user asks... |
-| `git-auto-commit` | 自动读取当前本地 Git 仓库的最新变更，生成变更摘要与提交信息并完成 git commit。适用于用户要求“自动提交/提交最新变更/总结后提交/生成 commit message 并提交”等场景。 |
-| `gpt101-dashboard-renew` | GPT101 项目 Dashboard 周更新：归档当前周并生成新一周。当用户说"更新 Dashboard"、"新一周"、"归档 Dashboard"时使用。 |
 | `json-canvas` | Create and edit JSON Canvas files (.canvas) with nodes, edges, groups, and connections. Use when working with .canvas... |
 | `lark-approval` | 飞书审批 API：审批实例、审批任务管理。 |
 | `lark-attendance` | 飞书考勤打卡：查询自己的考勤打卡记录 |
@@ -58,6 +54,7 @@ my-skills/
 | `lark-workflow-standup-report` | 日程待办摘要：编排 calendar +agenda 和 task +get-my-tasks，生成指定日期的日程与未完成任务摘要。适用于了解今天/明天/本周的安排。 |
 | `obsidian-bases` | Create and edit Obsidian Bases (.base files) with views, filters, formulas, and summaries. Use when working with .bas... |
 | `obsidian-markdown` | Create and edit Obsidian Flavored Markdown with wikilinks, embeds, callouts, properties, and other Obsidian-specific... |
+| `push-deploy` | Use when releasing code to production or staging, auditing release history, monitoring CI/CD, verifying backups and rollback readiness, or restoring live service during a release. |
 | `webpage-clipper` | 将网页 URL 剪裁/保存为本地 Markdown 并下载图片。用于用户请求网页剪裁、网页转 Markdown、保存网页为本地笔记/归档（含图片）或类似需求。 |
 
 ## 接入方式
