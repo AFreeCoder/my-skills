@@ -5,49 +5,18 @@
     "email": "AFreeCoder@users.noreply.github.com"
   },
   "metadata": {
-    "description": "集中管理的自建 AI Agent Skills",
-    "version": "1.1.0"
+    "description": "AFreeCoder 自建 AI Agent Skills",
+    "version": "2.0.0"
   },
   "plugins": [
     {
       "name": "my-skills",
-      "description": "Skills 合集：飞书、Obsidian、APIPool、部署、网页剪裁等",
+      "description": "AFreeCoder 自建 Skills：APIPool、发布和网页剪裁",
       "source": "./",
       "strict": false,
       "skills": [
         "./skills/apipool-push-deploy",
         "./skills/apipool-sync-upstream",
-        "./skills/baoyu-article-illustrator",
-        "./skills/chronicle",
-        "./skills/claude-to-im",
-        "./skills/frontend-design",
-        "./skills/json-canvas",
-        "./skills/lark-approval",
-        "./skills/lark-attendance",
-        "./skills/lark-base",
-        "./skills/lark-calendar",
-        "./skills/lark-contact",
-        "./skills/lark-doc",
-        "./skills/lark-drive",
-        "./skills/lark-event",
-        "./skills/lark-im",
-        "./skills/lark-mail",
-        "./skills/lark-markdown",
-        "./skills/lark-minutes",
-        "./skills/lark-okr",
-        "./skills/lark-openapi-explorer",
-        "./skills/lark-shared",
-        "./skills/lark-sheets",
-        "./skills/lark-skill-maker",
-        "./skills/lark-slides",
-        "./skills/lark-task",
-        "./skills/lark-vc",
-        "./skills/lark-whiteboard",
-        "./skills/lark-wiki",
-        "./skills/lark-workflow-meeting-summary",
-        "./skills/lark-workflow-standup-report",
-        "./skills/obsidian-bases",
-        "./skills/obsidian-markdown",
         "./skills/push-deploy",
         "./skills/webpage-clipper"
       ]
