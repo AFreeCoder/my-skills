@@ -4,6 +4,7 @@ set -euo pipefail
 usage() {
   cat <<'USAGE'
 Usage:
+  my-skills list
   my-skills init [--project <path>]
   my-skills link [--project <path>] <skill-name> [<skill-name>...]
   my-skills unlink [--project <path>] <skill-name> [<skill-name>...]
@@ -210,6 +211,17 @@ cmd_init() {
   ensure_init "$project"
 }
 
+cmd_list() {
+  [ "$#" -eq 0 ] || die "list does not accept arguments"
+
+  local skill_dir
+  for skill_dir in "$MY_SKILLS_HOME"/skills/*; do
+    [ -d "$skill_dir" ] || continue
+    [ -f "$skill_dir/SKILL.md" ] || continue
+    basename "$skill_dir"
+  done | sort
+}
+
 cmd_link() {
   local project_option project name target src resolved
   parse_project_option project_option "$@"
@@ -258,6 +270,10 @@ MY_SKILLS_HOME=$(canonical_dir "$MY_SKILLS_HOME") || die "MY_SKILLS_HOME is not 
 REMAINING_ARGS=()
 
 case "${1:-}" in
+  list)
+    shift
+    cmd_list "$@"
+    ;;
   init)
     shift
     cmd_init "$@"

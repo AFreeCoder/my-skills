@@ -41,6 +41,12 @@ assert_resolves_to() {
   [ "$actual" = "$expected_real" ] || fail "expected $link to resolve to $expected_real, got $actual"
 }
 
+assert_file_content() {
+  local file=$1 expected=$2 actual
+  actual=$(cat "$file")
+  [ "$actual" = "$expected" ] || fail "unexpected content in $file: $actual"
+}
+
 run_cli() {
   MY_SKILLS_HOME=$REPO_DIR "$CLI" "$@"
 }
@@ -55,6 +61,19 @@ new_project() {
   local dir
   dir=$(mktemp -d "$TMP_DIR/project.XXXXXX")
   printf '%s\n' "$dir"
+}
+
+test_list_skills() {
+  local output expected
+  output=$TMP_DIR/list.out
+  expected='apipool-push-deploy
+apipool-sync-upstream
+push-deploy
+webpage-clipper'
+
+  run_cli list >"$output"
+  assert_file_content "$output" "$expected"
+  expect_fail run_cli list push-deploy
 }
 
 test_init_creation_and_idempotence() {
@@ -175,6 +194,7 @@ test_symlink_invocation_resolves_home() {
   assert_resolves_to "$project/.agents/skills/push-deploy" "$REPO_DIR/skills/push-deploy"
 }
 
+test_list_skills
 test_init_creation_and_idempotence
 test_init_conflicts
 test_link_single_multiple_and_idempotent

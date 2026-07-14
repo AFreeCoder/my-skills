@@ -36,6 +36,12 @@ my-skills/
 在需要使用 Skill 的具体项目中，使用 `my-skills` 命令创建项目级目录和软链。
 不要把整个 `skills/` 目录链接到用户级全局目录。
 
+查看当前仓库维护的自建 Skill：
+
+```bash
+my-skills list
+```
+
 ```bash
 my-skills init
 my-skills link push-deploy
