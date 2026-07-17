@@ -1,0 +1,10 @@
+{
+  "third_party": [
+    {
+      "name": "vercel-agent-skills",
+      "source": "vercel-labs/agent-skills",
+      "scope": "project",
+      "description": "Vercel Labs Agent Skills collection"
+    }
+  ]
+}

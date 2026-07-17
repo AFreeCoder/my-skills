@@ -5,16 +5,16 @@ usage() {
   cat <<'USAGE'
 Usage:
   my-skills list
-  my-skills third-party list
-  my-skills third-party add <name-or-source> [skills add options...]
+  my-skills add [--project <path>] [--scope project|global] <name-or-source> [skills add options...]
   my-skills init [--project <path>]
   my-skills link [--project <path>] <skill-name> [<skill-name>...]
   my-skills unlink [--project <path>] <skill-name> [<skill-name>...]
 
 Environment:
   MY_SKILLS_HOME     Override the my-skills repository path.
-  MY_SKILLS_CATALOG  Override the third-party skills catalog path.
-  MY_SKILLS_NPX      Override the npx command used by third-party add.
+  MY_SKILLS_CATALOG  Override the third-party skills catalog JSON path.
+  MY_SKILLS_NODE     Override the node command used to read JSON.
+  MY_SKILLS_NPX      Override the npx command used by add for third-party skills.
 USAGE
 }
 
@@ -148,32 +148,50 @@ skill_source() {
 }
 
 catalog_path() {
-  printf '%s\n' "${MY_SKILLS_CATALOG:-$MY_SKILLS_HOME/catalog/third-party-skills.tsv}"
+  printf '%s\n' "${MY_SKILLS_CATALOG:-$MY_SKILLS_HOME/catalog/skills.json}"
 }
 
-is_catalog_comment_or_empty() {
-  local name=$1
-  [ -z "$name" ] && return 0
-  case "$name" in
-    '#'* ) return 0 ;;
-  esac
-  return 1
+node_cmd() {
+  printf '%s\n' "${MY_SKILLS_NODE:-node}"
+}
+
+self_skill_exists() {
+  local src
+  validate_skill_name "$1" || return 1
+  src=$(skill_source "$1")
+  [ -d "$src" ] && [ -f "$src/SKILL.md" ]
 }
 
 catalog_lookup() {
-  local wanted=$1 catalog name source default_scope description
+  local wanted=$1 catalog
   catalog=$(catalog_path)
   [ -f "$catalog" ] || return 1
+  "$(node_cmd)" -e '
+const fs = require("fs");
+const catalogPath = process.argv[1];
+const wanted = process.argv[2];
+const catalog = JSON.parse(fs.readFileSync(catalogPath, "utf8"));
+const entries = Array.isArray(catalog.third_party) ? catalog.third_party : [];
+const entry = entries.find((item) => item && item.name === wanted);
+if (!entry) process.exit(1);
+console.log([entry.name || "", entry.source || "", entry.scope || "project", entry.description || ""].join("\t"));
+' "$catalog" "$wanted"
+}
 
-  while IFS="$(printf '\t')" read -r name source default_scope description; do
-    is_catalog_comment_or_empty "$name" && continue
-    if [ "$name" = "$wanted" ]; then
-      printf '%s\t%s\t%s\t%s\n' "$name" "$source" "$default_scope" "$description"
-      return 0
-    fi
-  done < "$catalog"
-
-  return 1
+catalog_list() {
+  local catalog
+  catalog=$(catalog_path)
+  [ -f "$catalog" ] || return 0
+  "$(node_cmd)" -e '
+const fs = require("fs");
+const catalogPath = process.argv[1];
+const catalog = JSON.parse(fs.readFileSync(catalogPath, "utf8"));
+const entries = Array.isArray(catalog.third_party) ? catalog.third_party : [];
+for (const entry of entries) {
+  if (!entry || !entry.name || !entry.source) continue;
+  console.log([entry.name, "favorite", entry.scope || "project", entry.source, entry.description || ""].join("\t"));
+}
+' "$catalog"
 }
 
 looks_like_skill_source() {
@@ -255,56 +273,31 @@ cmd_list() {
   [ "$#" -eq 0 ] || die "list does not accept arguments"
 
   local skill_dir
+  printf 'name\ttype\tscope\tsource\tdescription\n'
   for skill_dir in "$MY_SKILLS_HOME"/skills/*; do
     [ -d "$skill_dir" ] || continue
     [ -f "$skill_dir/SKILL.md" ] || continue
-    basename "$skill_dir"
+    printf '%s\tself-built\tproject\t%s\t-\n' "$(basename "$skill_dir")" "$skill_dir"
   done | sort
+  catalog_list
 }
 
-cmd_third_party_list() {
-  [ "$#" -eq 0 ] || die "third-party list does not accept arguments"
+run_third_party_add() {
+  local source=$1 default_scope=$2 arg has_global=0 npx_cmd
+  shift 2
 
-  local catalog name source default_scope description
-  catalog=$(catalog_path)
-  [ -f "$catalog" ] || die "third-party catalog does not exist: $catalog"
-
-  printf 'name\tscope\tsource\tdescription\n'
-  while IFS="$(printf '\t')" read -r name source default_scope description; do
-    is_catalog_comment_or_empty "$name" && continue
-    printf '%s\t%s\t%s\t%s\n' "$name" "$default_scope" "$source" "$description"
-  done < "$catalog"
-}
-
-cmd_third_party_add() {
-  [ "$#" -gt 0 ] || die "third-party add requires a catalog name or source"
-
-  local input=$1 source default_scope entry arg has_global=0 force_project=0 npx_cmd
-  shift
-
-  if entry=$(catalog_lookup "$input"); then
-    source=$(printf '%s\n' "$entry" | cut -f2)
-    default_scope=$(printf '%s\n' "$entry" | cut -f3)
-  elif looks_like_skill_source "$input"; then
-    source=$input
-    default_scope=project
-  else
-    die "unknown third-party skill catalog entry: $input"
-  fi
-
-  [ -n "$source" ] || die "third-party catalog entry has empty source: $input"
+  [ -n "$source" ] || die "third-party catalog entry has empty source"
 
   REMAINING_ARGS=()
   for arg in "$@"; do
     case "$arg" in
       -g|--global) has_global=1 ;;
-      --project) force_project=1; continue ;;
     esac
     REMAINING_ARGS+=("$arg")
   done
 
   npx_cmd=${MY_SKILLS_NPX:-npx}
-  if [ "$default_scope" = "global" ] && [ "$has_global" -eq 0 ] && [ "$force_project" -eq 0 ]; then
+  if [ "$default_scope" = "global" ] && [ "$has_global" -eq 0 ]; then
     if [ "${#REMAINING_ARGS[@]}" -gt 0 ]; then
       "$npx_cmd" skills@latest add "$source" --global "${REMAINING_ARGS[@]}"
     else
@@ -319,33 +312,87 @@ cmd_third_party_add() {
   fi
 }
 
-cmd_third_party() {
-  case "${1:-}" in
-    list|ls)
-      shift
-      cmd_third_party_list "$@"
-      ;;
-    add)
-      shift
-      cmd_third_party_add "$@"
-      ;;
-    --help|-h|'')
-      cat <<'USAGE'
-Usage:
-  my-skills third-party list
-  my-skills third-party add <name-or-source> [skills add options...]
+cmd_add() {
+  local project_option input source default_scope entry project arg scope_override=''
+  parse_project_option project_option "$@"
+  [ "${#REMAINING_ARGS[@]}" -gt 0 ] || die "add requires a skill name or source"
 
-Examples:
-  my-skills third-party list
-  my-skills third-party add vercel-agent-skills --list
-  my-skills third-party add vercel-labs/agent-skills --skill vercel-optimize --yes
-  my-skills third-party add some-global-skill --project
-USAGE
-      ;;
-    *)
-      die "unknown third-party command: $1"
-      ;;
-  esac
+  input=${REMAINING_ARGS[0]}
+  if [ "${#REMAINING_ARGS[@]}" -gt 1 ]; then
+    REMAINING_ARGS=("${REMAINING_ARGS[@]:1}")
+  else
+    REMAINING_ARGS=()
+  fi
+
+  if self_skill_exists "$input"; then
+    [ "${#REMAINING_ARGS[@]}" -eq 0 ] || die "self-built skill add does not accept skills add options: $input"
+    project=$(project_root "$project_option")
+    preflight_skill_sources "$input"
+    preflight_link_targets "$project" "$input"
+    ensure_init "$project"
+    cmd_link --project "$project" "$input"
+    return
+  fi
+
+  if entry=$(catalog_lookup "$input"); then
+    source=$(printf '%s\n' "$entry" | cut -f2)
+    default_scope=$(printf '%s\n' "$entry" | cut -f3)
+  elif looks_like_skill_source "$input"; then
+    source=$input
+    default_scope=project
+  else
+    die "unknown skill: $input"
+  fi
+
+  local add_args=()
+  while [ "${#REMAINING_ARGS[@]}" -gt 0 ]; do
+    arg=${REMAINING_ARGS[0]}
+    case "$arg" in
+      --scope)
+        [ "${#REMAINING_ARGS[@]}" -ge 2 ] || die "--scope requires project or global"
+        scope_override=${REMAINING_ARGS[1]}
+        case "$scope_override" in
+          project|global) ;;
+          *) die "--scope must be project or global" ;;
+        esac
+        if [ "${#REMAINING_ARGS[@]}" -gt 2 ]; then
+          REMAINING_ARGS=("${REMAINING_ARGS[@]:2}")
+        else
+          REMAINING_ARGS=()
+        fi
+        ;;
+      --scope=*)
+        scope_override=${arg#--scope=}
+        case "$scope_override" in
+          project|global) ;;
+          *) die "--scope must be project or global" ;;
+        esac
+        if [ "${#REMAINING_ARGS[@]}" -gt 1 ]; then
+          REMAINING_ARGS=("${REMAINING_ARGS[@]:1}")
+        else
+          REMAINING_ARGS=()
+        fi
+        ;;
+      *)
+        add_args+=("$arg")
+        if [ "${#REMAINING_ARGS[@]}" -gt 1 ]; then
+          REMAINING_ARGS=("${REMAINING_ARGS[@]:1}")
+        else
+          REMAINING_ARGS=()
+        fi
+        ;;
+    esac
+  done
+
+  if [ -n "$scope_override" ]; then
+    default_scope=$scope_override
+  fi
+
+  if [ "${#add_args[@]}" -gt 0 ]; then
+    run_third_party_add "$source" "$default_scope" "${add_args[@]}"
+  else
+    run_third_party_add "$source" "$default_scope"
+  fi
 }
 
 cmd_link() {
@@ -400,9 +447,9 @@ case "${1:-}" in
     shift
     cmd_list "$@"
     ;;
-  third-party)
+  add)
     shift
-    cmd_third_party "$@"
+    cmd_add "$@"
     ;;
   init)
     shift

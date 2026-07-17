@@ -13,7 +13,7 @@ my-skills/
 ├── bin/
 │   └── my-skills          # 项目级 Skill 链接命令
 ├── catalog/
-│   └── third-party-skills.tsv
+│   └── skills.json
 ├── skills/                # 自建 Skill 的权威源码
 │   └── <skill-name>/
 │       └── SKILL.md
@@ -38,7 +38,7 @@ my-skills/
 在需要使用 Skill 的具体项目中，使用 `my-skills` 命令创建项目级目录和软链。
 不要把整个 `skills/` 目录链接到用户级全局目录。
 
-查看当前仓库维护的自建 Skill：
+查看当前仓库维护的自建 Skill 和收藏的第三方 Skill：
 
 ```bash
 my-skills list
@@ -46,7 +46,7 @@ my-skills list
 
 ```bash
 my-skills init
-my-skills link push-deploy
+my-skills add push-deploy
 ```
 
 一次启用多个自建 Skill 时，显式列出需要的名称：
@@ -59,7 +59,7 @@ my-skills link apipool-sync-upstream webpage-clipper
 
 ```bash
 my-skills init --project /path/to/project
-my-skills link --project /path/to/project push-deploy
+my-skills add --project /path/to/project push-deploy
 ```
 
 命令会创建：
@@ -102,20 +102,32 @@ export MY_SKILLS_HOME=/path/to/my-skills
 
 本仓库可以维护第三方 Skill 仓库地址收藏清单：
 
-```bash
-my-skills third-party list
+```json
+{
+  "third_party": [
+    {
+      "name": "vercel-agent-skills",
+      "source": "vercel-labs/agent-skills",
+      "scope": "project",
+      "description": "Vercel Labs Agent Skills collection"
+    }
+  ]
+}
 ```
 
-安装收藏清单中的第三方 Skill，或直接传入上游来源：
+`my-skills add` 会先查本仓库自建 Skill，找不到再查收藏清单；也可以直接传入上游
+来源：
 
 ```bash
-my-skills third-party add vercel-agent-skills --list
-my-skills third-party add vercel-labs/agent-skills --skill vercel-optimize --yes
+my-skills add push-deploy
+my-skills add vercel-agent-skills --list
+my-skills add vercel-agent-skills --skill vercel-optimize --yes
+my-skills add vercel-labs/agent-skills --skill vercel-optimize --yes
 ```
 
-`third-party add` 只是包装 `npx skills@latest add <source>`。默认保留上游确认提示；
-需要跳过确认时显式传 `--yes`。清单中的 `default_scope` 为 `global` 时会自动追加
-`--global`，临时改为项目级安装可传 `--project`。
+收藏清单命中的第三方 Skill 会包装为 `npx skills@latest add <source>`。默认保留上游
+确认提示；需要跳过确认时显式传 `--yes`。清单中的 `scope` 为 `global` 时会自动追加
+`--global`，临时改为项目级安装可传 `--scope project`。
 
 ## 更新自建 Skill
 
