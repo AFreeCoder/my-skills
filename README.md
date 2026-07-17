@@ -12,6 +12,8 @@ my-skills/
 │   └── marketplace.json   # 4 个自建 Skill 的兼容清单
 ├── bin/
 │   └── my-skills          # 项目级 Skill 链接命令
+├── catalog/
+│   └── third-party-skills.tsv
 ├── skills/                # 自建 Skill 的权威源码
 │   └── <skill-name>/
 │       └── SKILL.md
@@ -97,6 +99,23 @@ export MY_SKILLS_HOME=/path/to/my-skills
 
 第三方 Skill 的更新、版本固定和运行时依赖由使用它的项目自行负责；`my-skills`
 命令只管理本仓库 `skills/` 下的自建 Skill。
+
+本仓库可以维护第三方 Skill 仓库地址收藏清单：
+
+```bash
+my-skills third-party list
+```
+
+安装收藏清单中的第三方 Skill，或直接传入上游来源：
+
+```bash
+my-skills third-party add vercel-agent-skills --list
+my-skills third-party add vercel-labs/agent-skills --skill vercel-optimize --yes
+```
+
+`third-party add` 只是包装 `npx skills@latest add <source>`。默认保留上游确认提示；
+需要跳过确认时显式传 `--yes`。清单中的 `default_scope` 为 `global` 时会自动追加
+`--global`，临时改为项目级安装可传 `--project`。
 
 ## 更新自建 Skill
 

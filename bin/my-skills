@@ -5,12 +5,16 @@ usage() {
   cat <<'USAGE'
 Usage:
   my-skills list
+  my-skills third-party list
+  my-skills third-party add <name-or-source> [skills add options...]
   my-skills init [--project <path>]
   my-skills link [--project <path>] <skill-name> [<skill-name>...]
   my-skills unlink [--project <path>] <skill-name> [<skill-name>...]
 
 Environment:
-  MY_SKILLS_HOME  Override the my-skills repository path.
+  MY_SKILLS_HOME     Override the my-skills repository path.
+  MY_SKILLS_CATALOG  Override the third-party skills catalog path.
+  MY_SKILLS_NPX      Override the npx command used by third-party add.
 USAGE
 }
 
@@ -143,6 +147,42 @@ skill_source() {
   printf '%s/skills/%s' "$MY_SKILLS_HOME" "$1"
 }
 
+catalog_path() {
+  printf '%s\n' "${MY_SKILLS_CATALOG:-$MY_SKILLS_HOME/catalog/third-party-skills.tsv}"
+}
+
+is_catalog_comment_or_empty() {
+  local name=$1
+  [ -z "$name" ] && return 0
+  case "$name" in
+    '#'* ) return 0 ;;
+  esac
+  return 1
+}
+
+catalog_lookup() {
+  local wanted=$1 catalog name source default_scope description
+  catalog=$(catalog_path)
+  [ -f "$catalog" ] || return 1
+
+  while IFS="$(printf '\t')" read -r name source default_scope description; do
+    is_catalog_comment_or_empty "$name" && continue
+    if [ "$name" = "$wanted" ]; then
+      printf '%s\t%s\t%s\t%s\n' "$name" "$source" "$default_scope" "$description"
+      return 0
+    fi
+  done < "$catalog"
+
+  return 1
+}
+
+looks_like_skill_source() {
+  case "$1" in
+    http://*|https://*|git@*|*/*) return 0 ;;
+  esac
+  return 1
+}
+
 preflight_skill_sources() {
   local name src
   for name in "$@"; do
@@ -222,6 +262,92 @@ cmd_list() {
   done | sort
 }
 
+cmd_third_party_list() {
+  [ "$#" -eq 0 ] || die "third-party list does not accept arguments"
+
+  local catalog name source default_scope description
+  catalog=$(catalog_path)
+  [ -f "$catalog" ] || die "third-party catalog does not exist: $catalog"
+
+  printf 'name\tscope\tsource\tdescription\n'
+  while IFS="$(printf '\t')" read -r name source default_scope description; do
+    is_catalog_comment_or_empty "$name" && continue
+    printf '%s\t%s\t%s\t%s\n' "$name" "$default_scope" "$source" "$description"
+  done < "$catalog"
+}
+
+cmd_third_party_add() {
+  [ "$#" -gt 0 ] || die "third-party add requires a catalog name or source"
+
+  local input=$1 source default_scope entry arg has_global=0 force_project=0 npx_cmd
+  shift
+
+  if entry=$(catalog_lookup "$input"); then
+    source=$(printf '%s\n' "$entry" | cut -f2)
+    default_scope=$(printf '%s\n' "$entry" | cut -f3)
+  elif looks_like_skill_source "$input"; then
+    source=$input
+    default_scope=project
+  else
+    die "unknown third-party skill catalog entry: $input"
+  fi
+
+  [ -n "$source" ] || die "third-party catalog entry has empty source: $input"
+
+  REMAINING_ARGS=()
+  for arg in "$@"; do
+    case "$arg" in
+      -g|--global) has_global=1 ;;
+      --project) force_project=1; continue ;;
+    esac
+    REMAINING_ARGS+=("$arg")
+  done
+
+  npx_cmd=${MY_SKILLS_NPX:-npx}
+  if [ "$default_scope" = "global" ] && [ "$has_global" -eq 0 ] && [ "$force_project" -eq 0 ]; then
+    if [ "${#REMAINING_ARGS[@]}" -gt 0 ]; then
+      "$npx_cmd" skills@latest add "$source" --global "${REMAINING_ARGS[@]}"
+    else
+      "$npx_cmd" skills@latest add "$source" --global
+    fi
+  else
+    if [ "${#REMAINING_ARGS[@]}" -gt 0 ]; then
+      "$npx_cmd" skills@latest add "$source" "${REMAINING_ARGS[@]}"
+    else
+      "$npx_cmd" skills@latest add "$source"
+    fi
+  fi
+}
+
+cmd_third_party() {
+  case "${1:-}" in
+    list|ls)
+      shift
+      cmd_third_party_list "$@"
+      ;;
+    add)
+      shift
+      cmd_third_party_add "$@"
+      ;;
+    --help|-h|'')
+      cat <<'USAGE'
+Usage:
+  my-skills third-party list
+  my-skills third-party add <name-or-source> [skills add options...]
+
+Examples:
+  my-skills third-party list
+  my-skills third-party add vercel-agent-skills --list
+  my-skills third-party add vercel-labs/agent-skills --skill vercel-optimize --yes
+  my-skills third-party add some-global-skill --project
+USAGE
+      ;;
+    *)
+      die "unknown third-party command: $1"
+      ;;
+  esac
+}
+
 cmd_link() {
   local project_option project name target src resolved
   parse_project_option project_option "$@"
@@ -273,6 +399,10 @@ case "${1:-}" in
   list)
     shift
     cmd_list "$@"
+    ;;
+  third-party)
+    shift
+    cmd_third_party "$@"
     ;;
   init)
     shift

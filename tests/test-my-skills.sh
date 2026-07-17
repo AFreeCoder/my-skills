@@ -47,6 +47,11 @@ assert_file_content() {
   [ "$actual" = "$expected" ] || fail "unexpected content in $file: $actual"
 }
 
+assert_file_contains() {
+  local file=$1 expected=$2
+  grep -F "$expected" "$file" >/dev/null || fail "expected $file to contain: $expected"
+}
+
 run_cli() {
   MY_SKILLS_HOME=$REPO_DIR "$CLI" "$@"
 }
@@ -63,6 +68,21 @@ new_project() {
   printf '%s\n' "$dir"
 }
 
+run_cli_with_catalog() {
+  MY_SKILLS_HOME=$REPO_DIR MY_SKILLS_CATALOG=$1 "$CLI" "${@:2}"
+}
+
+fake_npx_path() {
+  local script
+  script=$TMP_DIR/fake-npx
+  printf '%s\n' \
+    '#!/usr/bin/env bash' \
+    'printf "%s\n" "$@" > "$MY_SKILLS_FAKE_NPX_OUTPUT"' \
+    > "$script"
+  chmod +x "$script"
+  printf '%s\n' "$script"
+}
+
 test_list_skills() {
   local output expected
   output=$TMP_DIR/list.out
@@ -74,6 +94,76 @@ webpage-clipper'
   run_cli list >"$output"
   assert_file_content "$output" "$expected"
   expect_fail run_cli list push-deploy
+}
+
+test_third_party_list() {
+  local catalog output
+  catalog=$TMP_DIR/catalog.tsv
+  output=$TMP_DIR/third-party-list.out
+  printf '%s\n' \
+    '# name	source	default_scope	description' \
+    'project-demo	owner/project-demo	project	Project demo skill' \
+    'global-demo	owner/global-demo	global	Global demo skill' \
+    > "$catalog"
+
+  run_cli_with_catalog "$catalog" third-party list >"$output"
+  assert_file_contains "$output" 'name	scope	source	description'
+  assert_file_contains "$output" 'project-demo	project	owner/project-demo	Project demo skill'
+  assert_file_contains "$output" 'global-demo	global	owner/global-demo	Global demo skill'
+}
+
+test_third_party_add_catalog_entry() {
+  local catalog fake output
+  catalog=$TMP_DIR/catalog-add.tsv
+  output=$TMP_DIR/fake-npx.out
+  fake=$(fake_npx_path)
+  printf '%s\n' \
+    '# name	source	default_scope	description' \
+    'project-demo	owner/project-demo	project	Project demo skill' \
+    'global-demo	owner/global-demo	global	Global demo skill' \
+    > "$catalog"
+
+  MY_SKILLS_FAKE_NPX_OUTPUT=$output MY_SKILLS_NPX=$fake run_cli_with_catalog "$catalog" third-party add project-demo --skill alpha --yes
+  assert_file_content "$output" 'skills@latest
+add
+owner/project-demo
+--skill
+alpha
+--yes'
+
+  MY_SKILLS_FAKE_NPX_OUTPUT=$output MY_SKILLS_NPX=$fake run_cli_with_catalog "$catalog" third-party add global-demo --yes
+  assert_file_content "$output" 'skills@latest
+add
+owner/global-demo
+--global
+--yes'
+
+  MY_SKILLS_FAKE_NPX_OUTPUT=$output MY_SKILLS_NPX=$fake run_cli_with_catalog "$catalog" third-party add global-demo --project --yes
+  assert_file_content "$output" 'skills@latest
+add
+owner/global-demo
+--yes'
+
+  MY_SKILLS_FAKE_NPX_OUTPUT=$output MY_SKILLS_NPX=$fake run_cli_with_catalog "$catalog" third-party add project-demo
+  assert_file_content "$output" 'skills@latest
+add
+owner/project-demo'
+}
+
+test_third_party_add_raw_source() {
+  local catalog fake output
+  catalog=$TMP_DIR/catalog-raw.tsv
+  output=$TMP_DIR/fake-npx-raw.out
+  fake=$(fake_npx_path)
+  printf '%s\n' '# name	source	default_scope	description' > "$catalog"
+
+  MY_SKILLS_FAKE_NPX_OUTPUT=$output MY_SKILLS_NPX=$fake run_cli_with_catalog "$catalog" third-party add owner/raw-skill --list
+  assert_file_content "$output" 'skills@latest
+add
+owner/raw-skill
+--list'
+
+  expect_fail run_cli_with_catalog "$catalog" third-party add unknown-alias
 }
 
 test_init_creation_and_idempotence() {
@@ -195,6 +285,9 @@ test_symlink_invocation_resolves_home() {
 }
 
 test_list_skills
+test_third_party_list
+test_third_party_add_catalog_entry
+test_third_party_add_raw_source
 test_init_creation_and_idempotence
 test_init_conflicts
 test_link_single_multiple_and_idempotent
