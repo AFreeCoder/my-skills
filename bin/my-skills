@@ -5,6 +5,7 @@ usage() {
   cat <<'USAGE'
 Usage:
   my-skills list
+  my-skills external add <name> <source> [--scope project|global] [--description <text>]
   my-skills add [--project <path>] [--scope project|global] <name-or-source> [skills add options...]
   my-skills init [--project <path>]
   my-skills link [--project <path>] <skill-name> [<skill-name>...]
@@ -63,13 +64,7 @@ project_root() {
 
 validate_skill_name() {
   local name=$1
-  case "$name" in
-    -*|'') return 1 ;;
-  esac
-  case "$name" in
-    *[!a-z0-9-]*) return 1 ;;
-  esac
-  return 0
+  [[ "$name" =~ ^[a-z0-9][a-z0-9-]*$ ]]
 }
 
 parse_project_option() {
@@ -196,6 +191,115 @@ for (const entry of entries) {
   console.log([entry.name, "favorite", entry.scope || "project", entry.source, entry.description || ""].join("\t"));
 }
 ' "$catalog"
+}
+
+catalog_add() {
+  local name=$1 source=$2 scope=$3 description=$4 catalog
+  catalog=$(catalog_path)
+  mkdir -p "$(dirname "$catalog")"
+  "$(node_cmd)" -e '
+const fs = require("fs");
+const catalogPath = process.argv[1];
+const name = process.argv[2];
+const source = process.argv[3];
+const scope = process.argv[4];
+const description = process.argv[5];
+
+let catalog = {};
+if (fs.existsSync(catalogPath)) {
+  catalog = JSON.parse(fs.readFileSync(catalogPath, "utf8"));
+}
+if (!Array.isArray(catalog.third_party)) {
+  catalog.third_party = [];
+}
+if (catalog.third_party.some((entry) => entry && entry.name === name)) {
+  console.error(`my-skills: external skill already exists: ${name}`);
+  process.exit(2);
+}
+catalog.third_party.push({ name, source, scope, description });
+fs.writeFileSync(catalogPath, `${JSON.stringify(catalog, null, 2)}\n`);
+' "$catalog" "$name" "$source" "$scope" "$description"
+  printf 'added external skill: %s -> %s (%s)\n' "$name" "$source" "$scope"
+}
+
+cmd_external_add() {
+  local name='' source='' scope='project' description='' arg
+
+  while [ "$#" -gt 0 ]; do
+    case "$1" in
+      --scope)
+        [ "$#" -ge 2 ] || die "--scope requires project or global"
+        scope=$2
+        shift 2
+        ;;
+      --scope=*)
+        scope=${1#--scope=}
+        shift
+        ;;
+      --description)
+        [ "$#" -ge 2 ] || die "--description requires text"
+        description=$2
+        shift 2
+        ;;
+      --description=*)
+        description=${1#--description=}
+        shift
+        ;;
+      --help|-h)
+        cat <<'USAGE'
+Usage:
+  my-skills external add <name> <source> [--scope project|global] [--description <text>]
+
+Examples:
+  my-skills external add emilkowalski-skills emilkowalski/skills --description "Design and animation skills"
+  my-skills external add some-global-skill owner/repo --scope global
+USAGE
+        return 0
+        ;;
+      --*)
+        die "unknown external add option: $1"
+        ;;
+      *)
+        if [ -z "$name" ]; then
+          name=$1
+        elif [ -z "$source" ]; then
+          source=$1
+        else
+          die "unexpected external add argument: $1"
+        fi
+        shift
+        ;;
+    esac
+  done
+
+  [ -n "$name" ] || die "external add requires a name"
+  [ -n "$source" ] || die "external add requires a source"
+  validate_skill_name "$name" || die "invalid external skill name: $name"
+  looks_like_skill_source "$source" || die "external skill source must be owner/repo, URL, or git remote: $source"
+  case "$scope" in
+    project|global) ;;
+    *) die "--scope must be project or global" ;;
+  esac
+
+  catalog_add "$name" "$source" "$scope" "$description"
+}
+
+cmd_external() {
+  case "${1:-}" in
+    add)
+      shift
+      cmd_external_add "$@"
+      ;;
+    --help|-h|'')
+      cat <<'USAGE'
+Usage:
+  my-skills external add <name> <source> [--scope project|global] [--description <text>]
+USAGE
+      ;;
+    *)
+      die "unknown external command: $1"
+      ;;
+  esac
 }
 
 looks_like_skill_source() {
@@ -450,6 +554,10 @@ case "${1:-}" in
   list)
     shift
     cmd_list "$@"
+    ;;
+  external)
+    shift
+    cmd_external "$@"
     ;;
   add)
     shift

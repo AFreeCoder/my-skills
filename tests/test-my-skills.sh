@@ -116,6 +116,24 @@ test_list_with_custom_catalog() {
   assert_file_contains "$output" 'global-demo	favorite	global	owner/global-demo	Global demo skill'
 }
 
+test_external_add_catalog_entry() {
+  local catalog output
+  catalog=$TMP_DIR/external-add.json
+  output=$TMP_DIR/external-add.out
+
+  run_cli_with_external_catalog "$catalog" external add new-skill owner/new-skill --description 'New skill'
+  run_cli_with_external_catalog "$catalog" list >"$output"
+  assert_file_contains "$output" 'new-skill	favorite	project	owner/new-skill	New skill'
+
+  run_cli_with_external_catalog "$catalog" external add global-skill https://github.com/owner/global-skill --scope global --description 'Global skill'
+  run_cli_with_external_catalog "$catalog" list >"$output"
+  assert_file_contains "$output" 'global-skill	favorite	global	https://github.com/owner/global-skill	Global skill'
+
+  expect_fail run_cli_with_external_catalog "$catalog" external add new-skill owner/duplicate
+  expect_fail run_cli_with_external_catalog "$catalog" external add BadName owner/bad
+  expect_fail run_cli_with_external_catalog "$catalog" external add bad-source not-a-source
+}
+
 test_add_self_built_skill() {
   local project
   project=$(new_project)
@@ -300,6 +318,7 @@ test_symlink_invocation_resolves_home() {
 
 test_list_skills
 test_list_with_custom_catalog
+test_external_add_catalog_entry
 test_add_self_built_skill
 test_add_catalog_entry
 test_add_raw_source

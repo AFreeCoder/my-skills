@@ -121,6 +121,13 @@ export MY_SKILLS_HOME=/path/to/my-skills
 }
 ```
 
+新增收藏项使用命令维护，避免手写 JSON：
+
+```bash
+my-skills external add emilkowalski-skills emilkowalski/skills --description "Emil Kowalski design and animation skills collection"
+my-skills external add some-global-skill owner/repo --scope global --description "Installed globally by default"
+```
+
 `my-skills add` 会先查本仓库自建 Skill，找不到再查收藏清单；也可以直接传入上游
 来源：
 
