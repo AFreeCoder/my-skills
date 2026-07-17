@@ -128,6 +128,10 @@ my-skills external add emilkowalski-skills emilkowalski/skills --description "Em
 my-skills external add some-global-skill owner/repo --scope global --description "Installed globally by default"
 ```
 
+默认写入本仓库的 `external/skills.json` 时，命令会自动执行 `git add`、`git commit`
+和 `git push`，提交信息为 `chore: add external skill <name>`。如果只想修改本地
+JSON，不提交和推送，可传 `--no-git`；如果要提交但暂不推送，可传 `--no-push`。
+
 `my-skills add` 会先查本仓库自建 Skill，找不到再查收藏清单；也可以直接传入上游
 来源：
 

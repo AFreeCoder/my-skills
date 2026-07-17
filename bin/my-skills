@@ -5,7 +5,7 @@ usage() {
   cat <<'USAGE'
 Usage:
   my-skills list
-  my-skills external add <name> <source> [--scope project|global] [--description <text>]
+  my-skills external add <name> <source> [--scope project|global] [--description <text>] [--no-git] [--no-push]
   my-skills add [--project <path>] [--scope project|global] <name-or-source> [skills add options...]
   my-skills init [--project <path>]
   my-skills link [--project <path>] <skill-name> [<skill-name>...]
@@ -150,6 +150,14 @@ catalog_path() {
   printf '%s\n' "${MY_SKILLS_CATALOG:-$MY_SKILLS_HOME/external/skills.json}"
 }
 
+default_catalog_path() {
+  printf '%s\n' "$MY_SKILLS_HOME/external/skills.json"
+}
+
+should_git_commit_catalog() {
+  [ "$(catalog_path)" = "$(default_catalog_path)" ]
+}
+
 node_cmd() {
   printf '%s\n' "${MY_SKILLS_NODE:-node}"
 }
@@ -193,6 +201,25 @@ for (const entry of entries) {
 ' "$catalog"
 }
 
+preflight_external_catalog_git() {
+  git -C "$MY_SKILLS_HOME" rev-parse --is-inside-work-tree >/dev/null 2>&1 || die "MY_SKILLS_HOME is not a git worktree"
+  git -C "$MY_SKILLS_HOME" diff --cached --quiet || die "refusing to commit while staged changes already exist"
+  git -C "$MY_SKILLS_HOME" diff --quiet -- external/skills.json || die "external/skills.json had uncommitted changes before this command"
+}
+
+commit_external_catalog() {
+  local name=$1 no_push=$2 branch
+
+  git -C "$MY_SKILLS_HOME" add external/skills.json
+  git -C "$MY_SKILLS_HOME" commit -m "chore: add external skill $name"
+
+  if [ "$no_push" -eq 0 ]; then
+    branch=$(git -C "$MY_SKILLS_HOME" rev-parse --abbrev-ref HEAD)
+    [ "$branch" != "HEAD" ] || die "cannot push from detached HEAD"
+    git -C "$MY_SKILLS_HOME" push origin "$branch"
+  fi
+}
+
 catalog_add() {
   local name=$1 source=$2 scope=$3 description=$4 catalog
   catalog=$(catalog_path)
@@ -223,7 +250,7 @@ fs.writeFileSync(catalogPath, `${JSON.stringify(catalog, null, 2)}\n`);
 }
 
 cmd_external_add() {
-  local name='' source='' scope='project' description='' arg
+  local name='' source='' scope='project' description='' arg no_git=0 no_push=0 auto_git=0
 
   while [ "$#" -gt 0 ]; do
     case "$1" in
@@ -245,10 +272,18 @@ cmd_external_add() {
         description=${1#--description=}
         shift
         ;;
+      --no-git)
+        no_git=1
+        shift
+        ;;
+      --no-push)
+        no_push=1
+        shift
+        ;;
       --help|-h)
         cat <<'USAGE'
 Usage:
-  my-skills external add <name> <source> [--scope project|global] [--description <text>]
+  my-skills external add <name> <source> [--scope project|global] [--description <text>] [--no-git] [--no-push]
 
 Examples:
   my-skills external add emilkowalski-skills emilkowalski/skills --description "Design and animation skills"
@@ -281,7 +316,16 @@ USAGE
     *) die "--scope must be project or global" ;;
   esac
 
+  if [ "$no_git" -eq 0 ] && should_git_commit_catalog; then
+    auto_git=1
+    preflight_external_catalog_git
+  fi
+
   catalog_add "$name" "$source" "$scope" "$description"
+
+  if [ "$auto_git" -eq 1 ]; then
+    commit_external_catalog "$name" "$no_push"
+  fi
 }
 
 cmd_external() {
@@ -293,7 +337,7 @@ cmd_external() {
     --help|-h|'')
       cat <<'USAGE'
 Usage:
-  my-skills external add <name> <source> [--scope project|global] [--description <text>]
+  my-skills external add <name> <source> [--scope project|global] [--description <text>] [--no-git] [--no-push]
 USAGE
       ;;
     *)

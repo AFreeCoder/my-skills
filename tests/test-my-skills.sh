@@ -134,6 +134,28 @@ test_external_add_catalog_entry() {
   expect_fail run_cli_with_external_catalog "$catalog" external add bad-source not-a-source
 }
 
+test_external_add_commits_default_catalog() {
+  local repo output latest_subject
+  repo=$(mktemp -d "$TMP_DIR/git-home.XXXXXX")
+  output=$TMP_DIR/git-external-add.out
+
+  mkdir -p "$repo/external"
+  printf '%s\n' '{"third_party":[]}' > "$repo/external/skills.json"
+  git -C "$repo" init -q
+  git -C "$repo" config user.email test@example.com
+  git -C "$repo" config user.name 'Test User'
+  git -C "$repo" add external/skills.json
+  git -C "$repo" commit -q -m 'init external catalog'
+
+  MY_SKILLS_HOME=$repo "$CLI" external add committed-skill owner/committed --description 'Committed skill' --no-push >"$output"
+  assert_file_contains "$output" 'added external skill: committed-skill -> owner/committed (project)'
+  latest_subject=$(git -C "$repo" log -1 --format=%s)
+  [ "$latest_subject" = 'chore: add external skill committed-skill' ] || fail "unexpected commit subject: $latest_subject"
+
+  MY_SKILLS_HOME=$repo "$CLI" list >"$output"
+  assert_file_contains "$output" 'committed-skill	favorite	project	owner/committed	Committed skill'
+}
+
 test_add_self_built_skill() {
   local project
   project=$(new_project)
@@ -319,6 +341,7 @@ test_symlink_invocation_resolves_home() {
 test_list_skills
 test_list_with_custom_catalog
 test_external_add_catalog_entry
+test_external_add_commits_default_catalog
 test_add_self_built_skill
 test_add_catalog_entry
 test_add_raw_source
