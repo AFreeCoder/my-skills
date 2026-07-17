@@ -9,7 +9,7 @@ AFreeCoder 自建 AI Agent Skills 的集中源码仓库。
 ```text
 my-skills/
 ├── .claude-plugin/
-│   └── marketplace.json   # 4 个自建 Skill 的兼容清单
+│   └── marketplace.json   # 自建 Skill 的兼容清单
 ├── bin/
 │   └── my-skills          # 项目级 Skill 链接命令
 ├── external/
@@ -24,13 +24,14 @@ my-skills/
 
 ## 当前收录
 
-当前共收录 `4` 个自建 Skill。
+当前共收录 `5` 个自建 Skill。
 
 | Skill | 说明 |
 | --- | --- |
 | `apipool-push-deploy` | 审查 APIPool 生产发布风险，验证 GitHub Actions 自动部署链路、备份、回滚和线上状态。 |
 | `apipool-sync-upstream` | 审慎同步 APIPool 的 `upstream/main`，评估上游变更对本地长期定制的影响并完成合入验证。 |
 | `push-deploy` | 通用发布门禁：审计发布历史、监控 CI/CD、核查备份与回滚准备并验证线上服务。 |
+| `skill-manage` | 按用户要求安装或更新 Skill，并维护自建 Skill 与第三方 Skill 清单。 |
 | `webpage-clipper` | 将网页剪裁为本地 Markdown 并下载图片，用于笔记与资料归档。 |
 
 ## 项目级接入

@@ -91,6 +91,7 @@ test_list_skills() {
     "apipool-push-deploy	self-built	project	$REPO_DIR/skills/apipool-push-deploy	-" \
     "apipool-sync-upstream	self-built	project	$REPO_DIR/skills/apipool-sync-upstream	-" \
     "push-deploy	self-built	project	$REPO_DIR/skills/push-deploy	-" \
+    "skill-manage	self-built	project	$REPO_DIR/skills/skill-manage	-" \
     "webpage-clipper	self-built	project	$REPO_DIR/skills/webpage-clipper	-" \
     'vercel-agent-skills	favorite	project	vercel-labs/agent-skills	Vercel Labs Agent Skills collection' \
     'emilkowalski-skills	favorite	project	emilkowalski/skills	Emil Kowalski design and animation skills collection')
@@ -160,9 +161,9 @@ test_add_self_built_skill() {
   local project
   project=$(new_project)
 
-  run_cli add --project "$project" push-deploy
-  assert_resolves_to "$project/.agents/skills/push-deploy" "$REPO_DIR/skills/push-deploy"
-  expect_fail run_cli add --project "$project" push-deploy --yes
+  run_cli add --project "$project" skill-manage
+  assert_resolves_to "$project/.agents/skills/skill-manage" "$REPO_DIR/skills/skill-manage"
+  expect_fail run_cli add --project "$project" skill-manage --yes
 }
 
 test_add_catalog_entry() {

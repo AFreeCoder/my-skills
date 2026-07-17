@@ -6,18 +6,19 @@
   },
   "metadata": {
     "description": "AFreeCoder 自建 AI Agent Skills",
-    "version": "2.0.0"
+    "version": "2.1.0"
   },
   "plugins": [
     {
       "name": "my-skills",
-      "description": "AFreeCoder 自建 Skills：APIPool、发布和网页剪裁",
+      "description": "AFreeCoder 自建 Skills：Skill 管理、APIPool、发布和网页剪裁",
       "source": "./",
       "strict": false,
       "skills": [
         "./skills/apipool-push-deploy",
         "./skills/apipool-sync-upstream",
         "./skills/push-deploy",
+        "./skills/skill-manage",
         "./skills/webpage-clipper"
       ]
     }
