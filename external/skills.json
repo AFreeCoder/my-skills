@@ -93,20 +93,21 @@
       "name": "shipany-template",
       "source": "AFreeCoder/shipany-template",
       "description": "ShipAny 模板随附的页面构建、快速启动和 Supabase 到 D1 迁移 Skills",
+      "ref": "main",
       "skills": [
         {
           "name": "shipany-page-builder",
-          "path": ".claude/skills/shipany-page-builder",
+          "path": ".agents/skills/shipany-page-builder",
           "description": "Create new dynamic pages from a short spec (keywords, route/path, reference content)."
         },
         {
           "name": "shipany-quick-start",
-          "path": ".claude/skills/shipany-quick-start",
+          "path": ".agents/skills/shipany-quick-start",
           "description": "Automate first-pass customization of a new ShipAny (ShipAny Two) project from a short project brief (app name, domain/app URL, product description/features, reference links, and branding preferences). Use when the user says they are starting a new project."
         },
         {
           "name": "supabase-to-d1",
-          "path": ".claude/skills/supabase-to-d1",
+          "path": ".agents/skills/supabase-to-d1",
           "description": "Migrate data from Supabase PostgreSQL to Cloudflare D1. Use when the user wants to migrate, transfer, copy, or move data from Supabase (or any PostgreSQL database) to Cloudflare D1, or when they mention \"supabase to d1\", \"pg to d1\", \"postgres to sqlite\", or ask about switching database providers from PostgreSQL to D1."
         }
       ]
