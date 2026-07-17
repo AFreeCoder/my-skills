@@ -12,9 +12,9 @@ Usage:
 
 Environment:
   MY_SKILLS_HOME     Override the my-skills repository path.
-  MY_SKILLS_CATALOG  Override the third-party skills catalog JSON path.
+  MY_SKILLS_EXTERNAL Override the external skills catalog JSON path.
   MY_SKILLS_NODE     Override the node command used to read JSON.
-  MY_SKILLS_NPX      Override the npx command used by add for third-party skills.
+  MY_SKILLS_NPX      Override the npx command used by add for external skills.
 USAGE
 }
 
@@ -148,7 +148,11 @@ skill_source() {
 }
 
 catalog_path() {
-  printf '%s\n' "${MY_SKILLS_CATALOG:-$MY_SKILLS_HOME/catalog/skills.json}"
+  if [ -n "${MY_SKILLS_EXTERNAL:-}" ]; then
+    printf '%s\n' "$MY_SKILLS_EXTERNAL"
+    return
+  fi
+  printf '%s\n' "${MY_SKILLS_CATALOG:-$MY_SKILLS_HOME/external/skills.json}"
 }
 
 node_cmd() {

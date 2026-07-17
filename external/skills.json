@@ -5,6 +5,12 @@
       "source": "vercel-labs/agent-skills",
       "scope": "project",
       "description": "Vercel Labs Agent Skills collection"
+    },
+    {
+      "name": "emilkowalski-skills",
+      "source": "emilkowalski/skills",
+      "scope": "project",
+      "description": "Emil Kowalski design and animation skills collection"
     }
   ]
 }

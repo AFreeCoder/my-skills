@@ -68,8 +68,8 @@ new_project() {
   printf '%s\n' "$dir"
 }
 
-run_cli_with_catalog() {
-  MY_SKILLS_HOME=$REPO_DIR MY_SKILLS_CATALOG=$1 "$CLI" "${@:2}"
+run_cli_with_external_catalog() {
+  MY_SKILLS_HOME=$REPO_DIR MY_SKILLS_EXTERNAL=$1 "$CLI" "${@:2}"
 }
 
 fake_npx_path() {
@@ -92,7 +92,8 @@ test_list_skills() {
     "apipool-sync-upstream	self-built	project	$REPO_DIR/skills/apipool-sync-upstream	-" \
     "push-deploy	self-built	project	$REPO_DIR/skills/push-deploy	-" \
     "webpage-clipper	self-built	project	$REPO_DIR/skills/webpage-clipper	-" \
-    'vercel-agent-skills	favorite	project	vercel-labs/agent-skills	Vercel Labs Agent Skills collection')
+    'vercel-agent-skills	favorite	project	vercel-labs/agent-skills	Vercel Labs Agent Skills collection' \
+    'emilkowalski-skills	favorite	project	emilkowalski/skills	Emil Kowalski design and animation skills collection')
 
   run_cli list >"$output"
   assert_file_content "$output" "$expected"
@@ -110,7 +111,7 @@ test_list_with_custom_catalog() {
     ']}' \
     > "$catalog"
 
-  run_cli_with_catalog "$catalog" list >"$output"
+  run_cli_with_external_catalog "$catalog" list >"$output"
   assert_file_contains "$output" 'project-demo	favorite	project	owner/project-demo	Project demo skill'
   assert_file_contains "$output" 'global-demo	favorite	global	owner/global-demo	Global demo skill'
 }
@@ -136,7 +137,7 @@ test_add_catalog_entry() {
     ']}' \
     > "$catalog"
 
-  MY_SKILLS_FAKE_NPX_OUTPUT=$output MY_SKILLS_NPX=$fake run_cli_with_catalog "$catalog" add project-demo --skill alpha --yes
+  MY_SKILLS_FAKE_NPX_OUTPUT=$output MY_SKILLS_NPX=$fake run_cli_with_external_catalog "$catalog" add project-demo --skill alpha --yes
   assert_file_content "$output" 'skills@latest
 add
 owner/project-demo
@@ -144,20 +145,20 @@ owner/project-demo
 alpha
 --yes'
 
-  MY_SKILLS_FAKE_NPX_OUTPUT=$output MY_SKILLS_NPX=$fake run_cli_with_catalog "$catalog" add global-demo --yes
+  MY_SKILLS_FAKE_NPX_OUTPUT=$output MY_SKILLS_NPX=$fake run_cli_with_external_catalog "$catalog" add global-demo --yes
   assert_file_content "$output" 'skills@latest
 add
 owner/global-demo
 --global
 --yes'
 
-  MY_SKILLS_FAKE_NPX_OUTPUT=$output MY_SKILLS_NPX=$fake run_cli_with_catalog "$catalog" add global-demo --scope project --yes
+  MY_SKILLS_FAKE_NPX_OUTPUT=$output MY_SKILLS_NPX=$fake run_cli_with_external_catalog "$catalog" add global-demo --scope project --yes
   assert_file_content "$output" 'skills@latest
 add
 owner/global-demo
 --yes'
 
-  MY_SKILLS_FAKE_NPX_OUTPUT=$output MY_SKILLS_NPX=$fake run_cli_with_catalog "$catalog" add project-demo
+  MY_SKILLS_FAKE_NPX_OUTPUT=$output MY_SKILLS_NPX=$fake run_cli_with_external_catalog "$catalog" add project-demo
   assert_file_content "$output" 'skills@latest
 add
 owner/project-demo'
@@ -170,13 +171,13 @@ test_add_raw_source() {
   fake=$(fake_npx_path)
   printf '%s\n' '{"third_party":[]}' > "$catalog"
 
-  MY_SKILLS_FAKE_NPX_OUTPUT=$output MY_SKILLS_NPX=$fake run_cli_with_catalog "$catalog" add owner/raw-skill --list
+  MY_SKILLS_FAKE_NPX_OUTPUT=$output MY_SKILLS_NPX=$fake run_cli_with_external_catalog "$catalog" add owner/raw-skill --list
   assert_file_content "$output" 'skills@latest
 add
 owner/raw-skill
 --list'
 
-  expect_fail run_cli_with_catalog "$catalog" add unknown-alias
+  expect_fail run_cli_with_external_catalog "$catalog" add unknown-alias
 }
 
 test_init_creation_and_idempotence() {

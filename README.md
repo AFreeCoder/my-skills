@@ -12,7 +12,7 @@ my-skills/
 │   └── marketplace.json   # 4 个自建 Skill 的兼容清单
 ├── bin/
 │   └── my-skills          # 项目级 Skill 链接命令
-├── catalog/
+├── external/
 │   └── skills.json
 ├── skills/                # 自建 Skill 的权威源码
 │   └── <skill-name>/
@@ -110,6 +110,12 @@ export MY_SKILLS_HOME=/path/to/my-skills
       "source": "vercel-labs/agent-skills",
       "scope": "project",
       "description": "Vercel Labs Agent Skills collection"
+    },
+    {
+      "name": "emilkowalski-skills",
+      "source": "emilkowalski/skills",
+      "scope": "project",
+      "description": "Emil Kowalski design and animation skills collection"
     }
   ]
 }
@@ -123,11 +129,17 @@ my-skills add push-deploy
 my-skills add vercel-agent-skills --list
 my-skills add vercel-agent-skills --skill vercel-optimize --yes
 my-skills add vercel-labs/agent-skills --skill vercel-optimize --yes
+my-skills add emilkowalski-skills --list
+my-skills add emilkowalski-skills --skill apple-design --yes
 ```
 
 收藏清单命中的第三方 Skill 会包装为 `npx skills@latest add <source>`。默认保留上游
 确认提示；需要跳过确认时显式传 `--yes`。清单中的 `scope` 为 `global` 时会自动追加
 `--global`，临时改为项目级安装可传 `--scope project`。
+
+同一个外部仓库包含多个子 Skill 时，本清单只收藏仓库 source，不拆成多个重复条目。
+安装具体子 Skill 时把 `--skill <name>` 透传给 `skills@latest`；查看子 Skill 清单时
+使用 `--list`。
 
 ## 更新自建 Skill
 
