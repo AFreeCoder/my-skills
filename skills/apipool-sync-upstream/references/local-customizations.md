@@ -119,6 +119,46 @@ Kiro 账号、OAuth、token refresh、网关转发与前端配置导入是 APIPo
 - 新增配置是否需要同步补到 `deploy/.env.example`、`deploy/config.example.yaml` 和后台表单
 - 表格分页默认值仍然由后台 `table_default_page_size` / `table_page_size_options` 统一控制，不要重新引入全局 `table-page-size` localStorage 持久化覆盖系统默认值
 
+### 6. 请求明细日志、调度与计费数据口径
+
+以下本地能力容易在上游新增审计、中间件、调度权重或计费字段时发生“各自正确、组合后退化”：
+
+- `backend/internal/pkg/reqlog/`
+- `backend/internal/server/middleware/reqlog_capture.go`
+- `backend/internal/service/reqlog_*`
+- `backend/internal/server/http.go`
+- `backend/internal/server/router.go`
+- `backend/internal/server/routes/gateway.go`
+- `backend/internal/service/openai_account_scheduler.go`
+- `backend/internal/repository/account_repo.go`
+- `backend/internal/service/billing_service.go`
+- `backend/internal/service/openai_gateway_usage.go`
+- `backend/internal/repository/usage_log_repo_*.go`
+- `backend/ent/schema/usage_log.go`
+
+重点检查：
+
+- 上游新增审计日志或其他异步 sink 时，HTTP server 的启动、关闭和错误清理必须同时覆盖 ReqLog 与新增组件
+- 新增网关、图片、视频或异步任务路由时，ReqLog 捕获中间件和请求体快照不能遗漏
+- OpenAI 调度新增权重时，不能覆盖本地 `previous_response`、`session_sticky` 和跨分组保护语义；所有权重应在配置、公开设置、后台表单与测试中形成一致组合
+- 账号凭据局部更新继续使用 `MergeCredentials` JSONB 原子合并，避免 billing probe、OAuth 或 token refresh 相互覆盖 credentials
+- 图片输入 token 与费用是独立对账口径：文本费用留在 `InputCost`，图片输入费用留在 `ImageInputCost`，总费用再汇总；不要把上游新增图片计费重新并回文本输入费用
+
+### 7. 代理关联关系
+
+APIPool 当前账号到代理的 Ent 关系允许多个账号共用同一代理。上游测试或查询代码如果隐含一对一假设，会在生成代码或运行时查询中产生语义冲突：
+
+- `backend/ent/schema/account.go`
+- `backend/ent/schema/proxy.go`
+- `backend/internal/repository/proxy_repo.go`
+- `backend/internal/repository/proxy_*test.go`
+
+重点检查：
+
+- 不要为了让上游测试通过而把本地多账号共享代理关系改回一对一
+- 上游使用 `Only`、唯一边或单账号断言时，先按本地关系模型改写测试/查询，再验证代理到期、更新探测和调度失效通知
+- Ent schema 变化后必须重新运行 `go generate ./ent`，并确认生成 diff 没有悄然改变关系基数
+
 ## 高风险重叠模式
 
 只要上游更新命中以下任一模式，就不要满足于“能编译通过”：
@@ -126,6 +166,15 @@ Kiro 账号、OAuth、token refresh、网关转发与前端配置导入是 APIPo
 - `backend/internal/service/openai_*`
 - `backend/internal/service/ratelimit_service.go`
 - `backend/internal/service/token_refresh_service.go`
+- `backend/internal/pkg/reqlog/`
+- `backend/internal/server/middleware/reqlog_capture.go`
+- `backend/internal/service/reqlog_*`
+- `backend/internal/service/openai_account_scheduler.go`
+- `backend/internal/service/billing_service.go`
+- `backend/internal/service/openai_gateway_usage.go`
+- `backend/internal/repository/usage_log_repo_*.go`
+- `backend/ent/schema/usage_log.go`
+- `backend/ent/schema/proxy.go`
 - `backend/internal/service/kiro_*`
 - `backend/internal/service/gateway_service_kiro.go`
 - `backend/internal/handler/admin/`
