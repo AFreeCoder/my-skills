@@ -89,14 +89,22 @@ python3 "$MANAGER" install <skill-name> --scope user
 
 ## 维护第三方清单
 
-新增来源会扫描上游全部 `SKILL.md`，把具体名称、路径和说明写入 `external/skills.json`：
+新增来源会扫描上游 `SKILL.md`，把具体名称、路径和说明写入 `external/skills.json`：
 
 ```bash
 python3 "$MANAGER" external add <source-alias> <owner/repo-or-git-url> \
   --description <description>
 ```
 
-来源已登记但目标 Skill 不在清单时，先刷新：
+来源包含重复生成副本，或只希望信任部分 Skill 时，必须显式选择相对路径；该参数可以重复：
+
+```bash
+python3 "$MANAGER" external add <source-alias> <owner/repo-or-git-url> \
+  --description <description> \
+  --skill-path <relative/path/to/skill>
+```
+
+刷新默认只更新当前已获准 Skill 的名称、路径和说明，不自动扩大可信清单：
 
 ```bash
 python3 "$MANAGER" external refresh <source-alias>
@@ -106,6 +114,12 @@ python3 "$MANAGER" external refresh <source-alias>
 
 ```bash
 python3 "$MANAGER" external refresh
+```
+
+只有人工确认要吸收来源中新出现的全部 Skill 时，才运行：
+
+```bash
+python3 "$MANAGER" external refresh <source-alias> --discover-new
 ```
 
 移除来源：

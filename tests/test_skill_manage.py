@@ -175,10 +175,42 @@ class SkillManageTest(unittest.TestCase):
         self.make_skill(source / "skills" / "new-skill", "new-skill", "刷新后新增 Skill。")
         self.run_manager("external", "refresh", "test-source")
         names = [item["name"] for item in self.read_catalog()["third_party"][0]["skills"]]
+        self.assertEqual(names, ["third-skill"])
+        self.run_manager("external", "refresh", "test-source", "--discover-new")
+        names = [item["name"] for item in self.read_catalog()["third_party"][0]["skills"]]
         self.assertEqual(names, ["new-skill", "third-skill"])
         result = self.run_manager("external", "list")
         self.assertIn("test-source", result.stdout)
         self.assertIn("\t2\t", result.stdout)
+
+    def test_external_add_can_select_paths_from_duplicate_source(self) -> None:
+        source = self.base / "duplicate-source"
+        self.make_skill(source / "preferred" / "demo", "selected-skill", "选中版本。")
+        self.make_skill(source / "generated" / "demo", "selected-skill", "生成副本。")
+        self.make_skill(source / "skills" / "other", "other-skill", "未选 Skill。")
+
+        self.run_manager(
+            "external",
+            "add",
+            "selected-source",
+            str(source),
+            "--description",
+            "带重复副本的测试来源",
+            "--skill-path",
+            "preferred/demo",
+        )
+        skills = self.read_catalog()["third_party"][0]["skills"]
+        self.assertEqual(
+            skills,
+            [
+                {
+                    "name": "selected-skill",
+                    "path": "preferred/demo",
+                    "description": "选中版本。",
+                }
+            ],
+        )
+        self.run_manager("external", "refresh", "selected-source")
 
     def test_external_collision_rolls_back_catalog(self) -> None:
         source = self.make_external_source("demo-skill")

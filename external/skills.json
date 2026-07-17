@@ -88,6 +88,52 @@
           "description": "Reviews animation and motion code against a high craft bar derived from Emil Kowalski's design engineering philosophy. Default to flagging; approval is earned."
         }
       ]
+    },
+    {
+      "name": "shipany-template",
+      "source": "AFreeCoder/shipany-template",
+      "description": "ShipAny 模板随附的页面构建、快速启动和 Supabase 到 D1 迁移 Skills",
+      "skills": [
+        {
+          "name": "shipany-page-builder",
+          "path": ".claude/skills/shipany-page-builder",
+          "description": "Create new dynamic pages from a short spec (keywords, route/path, reference content)."
+        },
+        {
+          "name": "shipany-quick-start",
+          "path": ".claude/skills/shipany-quick-start",
+          "description": "Automate first-pass customization of a new ShipAny (ShipAny Two) project from a short project brief (app name, domain/app URL, product description/features, reference links, and branding preferences). Use when the user says they are starting a new project."
+        },
+        {
+          "name": "supabase-to-d1",
+          "path": ".claude/skills/supabase-to-d1",
+          "description": "Migrate data from Supabase PostgreSQL to Cloudflare D1. Use when the user wants to migrate, transfer, copy, or move data from Supabase (or any PostgreSQL database) to Cloudflare D1, or when they mention \"supabase to d1\", \"pg to d1\", \"postgres to sqlite\", or ask about switching database providers from PostgreSQL to D1."
+        }
+      ]
+    },
+    {
+      "name": "ui-ux-pro-max",
+      "source": "nextlevelbuilder/ui-ux-pro-max-skill",
+      "description": "UI/UX Pro Max 设计智能 Skill",
+      "skills": [
+        {
+          "name": "ui-ux-pro-max",
+          "path": ".claude/skills/ui-ux-pro-max",
+          "description": "UI/UX design intelligence for web and mobile. Searchable local database with 84 styles, 192 color palettes, 74 font pairings, 192 product types, 98 UX guidelines, 104 icon entries, 16 GSAP motion presets, and 25 chart types across 22 stacks (React, Next.js, Vue, Nuxt, Svelte, Astro, SwiftUI, React Native, Flutter, Tailwind, shadcn/ui, Jetpack Compose, Angular, Laravel, JavaFX, WPF, WinUI, Avalonia, Uno Platform, UWP, Three.js, and HTML/CSS). Use when designing, building, or reviewing UI: pages, components, color schemes, typography, layout, accessibility, animation, or data visualization."
+        }
+      ]
+    },
+    {
+      "name": "shadcn-ui",
+      "source": "shadcn-ui/ui",
+      "description": "shadcn/ui 官方组件和项目管理 Skill",
+      "skills": [
+        {
+          "name": "shadcn",
+          "path": "skills/shadcn",
+          "description": "Manages shadcn components and projects — adding, searching, fixing, debugging, styling, and composing UI, including chat interfaces. Provides project context, component docs, and usage examples. Applies when working with shadcn/ui, component registries, presets, --preset codes, or any project with a components.json file. Also triggers for \"shadcn init\", \"create an app with --preset\", or \"switch to --preset\"."
+        }
+      ]
     }
   ]
 }

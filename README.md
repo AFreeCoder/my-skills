@@ -27,12 +27,14 @@ my-skills/
 
 ## 当前收录
 
-当前共收录 `5` 个自建 Skill。
+当前共收录 `7` 个自建 Skill。
 
 | Skill | 说明 |
 | --- | --- |
 | `apipool-push-deploy` | 审查 APIPool 生产发布风险，验证 GitHub Actions 自动部署链路、备份、回滚和线上状态。 |
 | `apipool-sync-upstream` | 审慎同步 APIPool 的 `upstream/main`，评估上游变更对本地长期定制的影响并完成合入验证。 |
+| `classic-to-default-sync` | 审计 `new-api` 的 classic 前端提交，并把缺失功能同步到 default 前端。 |
+| `i18n-translate` | 维护 `new-api` default 前端六种语言的翻译完整性与一致性。 |
 | `push-deploy` | 通用发布门禁：审计发布历史、监控 CI/CD、核查备份与回滚准备并验证线上服务。 |
 | `skill-manage` | 维护本仓库事实源，并管理用户级和项目级 Skill 的完整生命周期。 |
 | `webpage-clipper` | 将网页剪裁为本地 Markdown 并下载图片，用于笔记与资料归档。 |
@@ -124,11 +126,26 @@ python3 "$MANAGER" external add owner-skills owner/repo \
   --description "第三方 Skill 来源说明"
 ```
 
+来源包含重复副本或只希望信任其中一部分时，明确选择一个或多个相对路径：
+
+```bash
+python3 "$MANAGER" external add owner-skills owner/repo \
+  --description "第三方 Skill 来源说明" \
+  --skill-path skills/selected-skill
+```
+
 刷新一个来源或全部来源：
 
 ```bash
 python3 "$MANAGER" external refresh owner-skills
 python3 "$MANAGER" external refresh
+```
+
+刷新默认只更新已经获准的 Skill 元数据，不会自动扩大可信清单。只有在人工确认希望吸收上游新增
+Skill 时，才显式重新发现全部内容：
+
+```bash
+python3 "$MANAGER" external refresh owner-skills --discover-new
 ```
 
 从清单移除来源不会卸载已经复制到项目或用户目录的 Skill：

@@ -432,6 +432,67 @@ def discover_upstream_skills(checkout: Path) -> list[dict[str, str]]:
     return [discovered[name] for name in sorted(discovered)]
 
 
+def discover_selected_skills(checkout: Path, relative_paths: list[str]) -> list[dict[str, str]]:
+    """只登记用户明确选择的上游 Skill 路径。"""
+    discovered: dict[str, dict[str, str]] = {}
+    for index, relative_path in enumerate(relative_paths):
+        path_error = validate_relative_skill_path(
+            relative_path, f"--skill-path[{index}]"
+        )
+        if path_error:
+            raise SkillManageError(path_error)
+        skill_dir = (checkout / relative_path).resolve()
+        try:
+            skill_dir.relative_to(checkout.resolve())
+        except ValueError as exc:
+            raise SkillManageError(
+                f"第三方 Skill 路径越出来源仓库：{relative_path}"
+            ) from exc
+        skill_file = skill_dir / "SKILL.md"
+        if not skill_file.is_file():
+            raise SkillManageError(f"第三方 Skill 路径失效：{relative_path}")
+        frontmatter = parse_frontmatter(skill_file)
+        name = frontmatter.get("name", "").strip()
+        description = frontmatter.get("description", "").strip()
+        validate_name(name, f"上游 {relative_path} 的 Skill 名称")
+        if not description:
+            raise SkillManageError(f"上游 Skill 缺少 description：{relative_path}")
+        if name in discovered:
+            raise SkillManageError(f"选择的上游 Skill 名称重复：{name}")
+        discovered[name] = {
+            "name": name,
+            "path": Path(relative_path).as_posix(),
+            "description": description,
+        }
+    if not discovered:
+        raise SkillManageError("至少需要一个 --skill-path")
+    return [discovered[name] for name in sorted(discovered)]
+
+
+def refresh_registered_skills(
+    checkout: Path, configured: list[dict[str, Any]]
+) -> list[dict[str, str]]:
+    """刷新已获准的 Skill 元数据，不自动扩大可信清单。"""
+    refreshed: list[dict[str, str]] = []
+    for skill in configured:
+        name = str(skill["name"])
+        relative_path = str(skill["path"])
+        source_dir = validate_source_path(checkout, relative_path, name)
+        description = parse_frontmatter(source_dir / "SKILL.md").get(
+            "description", ""
+        ).strip()
+        if not description:
+            raise SkillManageError(f"上游 Skill 缺少 description：{relative_path}")
+        refreshed.append(
+            {
+                "name": name,
+                "path": relative_path,
+                "description": description,
+            }
+        )
+    return sorted(refreshed, key=lambda item: item["name"])
+
+
 def validate_source_path(checkout: Path, relative_path: str, expected_name: str) -> Path:
     source_dir = (checkout / relative_path).resolve()
     try:
@@ -687,7 +748,12 @@ def external_entries(data: dict[str, Any]) -> list[dict[str, Any]]:
 
 
 def external_add(
-    repo: Path, alias: str, source: str, description: str, ref: str | None
+    repo: Path,
+    alias: str,
+    source: str,
+    description: str,
+    ref: str | None,
+    skill_paths: list[str],
 ) -> None:
     validate_name(alias, "第三方来源别名")
     _, _, data, errors = load_inventory(repo, strict=False)
@@ -708,7 +774,11 @@ def external_add(
         entry["ref"] = ref
     with tempfile.TemporaryDirectory(prefix="skill-manage-source-") as temporary:
         with materialize_source(entry, Path(temporary)) as checkout:
-            entry["skills"] = discover_upstream_skills(checkout)
+            entry["skills"] = (
+                discover_selected_skills(checkout, skill_paths)
+                if skill_paths
+                else discover_upstream_skills(checkout)
+            )
     candidate = {"third_party": [*entries, entry]}
     candidate_path = catalog_path(repo)
     write_json(candidate_path, candidate)
@@ -719,7 +789,7 @@ def external_add(
     print(f"已登记第三方来源：{alias}，发现 {len(entry['skills'])} 个 Skill")
 
 
-def external_refresh(repo: Path, aliases: list[str]) -> None:
+def external_refresh(repo: Path, aliases: list[str], discover_new: bool) -> None:
     _, _, data, errors = load_inventory(repo, strict=False)
     if errors:
         raise SkillManageError("刷新前清单校验失败：\n- " + "\n- ".join(errors))
@@ -736,7 +806,11 @@ def external_refresh(repo: Path, aliases: list[str]) -> None:
         entry = candidate_by_name[alias]
         with tempfile.TemporaryDirectory(prefix="skill-manage-source-") as temporary:
             with materialize_source(entry, Path(temporary)) as checkout:
-                entry["skills"] = discover_upstream_skills(checkout)
+                entry["skills"] = (
+                    discover_upstream_skills(checkout)
+                    if discover_new
+                    else refresh_registered_skills(checkout, entry["skills"])
+                )
         print(f"已刷新第三方来源：{alias}，发现 {len(entry['skills'])} 个 Skill")
     write_json(catalog_path(repo), candidate)
     _, _, _, candidate_errors = load_inventory(repo, strict=False)
@@ -815,8 +889,19 @@ def build_parser() -> argparse.ArgumentParser:
     external_add_parser.add_argument("source")
     external_add_parser.add_argument("--description", required=True)
     external_add_parser.add_argument("--ref", help="可选 Git 分支或标签")
+    external_add_parser.add_argument(
+        "--skill-path",
+        action="append",
+        default=[],
+        help="只登记指定的 Skill 相对路径；可重复传入",
+    )
     external_refresh_parser = external_subparsers.add_parser("refresh", help="刷新第三方来源")
     external_refresh_parser.add_argument("names", nargs="*")
+    external_refresh_parser.add_argument(
+        "--discover-new",
+        action="store_true",
+        help="重新扫描来源中的全部 Skill，并扩大当前清单",
+    )
     external_remove_parser = external_subparsers.add_parser("remove", help="移除第三方来源")
     external_remove_parser.add_argument("name")
     external_remove_parser.add_argument("--yes", action="store_true")
@@ -850,9 +935,16 @@ def main() -> int:
             if args.external_command == "list":
                 external_list(repo)
             elif args.external_command == "add":
-                external_add(repo, args.name, args.source, args.description, args.ref)
+                external_add(
+                    repo,
+                    args.name,
+                    args.source,
+                    args.description,
+                    args.ref,
+                    args.skill_path,
+                )
             elif args.external_command == "refresh":
-                external_refresh(repo, args.names)
+                external_refresh(repo, args.names, args.discover_new)
             elif args.external_command == "remove":
                 external_remove(repo, args.name, args.yes)
         return 0
