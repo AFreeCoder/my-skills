@@ -2,17 +2,17 @@
 
 AFreeCoder 的 Skill 唯一事实源：自建 Skill 源码 + 常用第三方 Skill 收藏。
 
-安装、更新、卸载统一使用 [skills CLI](https://github.com/vercel-labs/skills)（`npx skills`）；仓库内的 `skill-manage` Skill 负责编排"修改自建 Skill → 推送 → 刷新安装"的闭环。本仓库不再包含管理脚本、准入清单或 lock/state 文件。
+安装、更新、卸载统一使用 [skills CLI](https://github.com/vercel-labs/skills)（`npx -y skills@latest`）；仓库内的 `skill-manage` Skill 负责编排"修改自建 Skill → 推送 → 刷新安装"的闭环。本仓库不再包含管理脚本、准入清单或 lock/state 文件。
 
 ## 安装约定
 
 实体目录：项目级 `<project>/.agents/skills/`，用户级 `~/.agents/skills/`（skills CLI 的 canonical 目录）。Codex 直接读取该目录；Claude Code 经 `.claude/skills` 软链读取。
 
 ```bash
-npx skills add <source> --skill <name> -y      # 项目级（默认）
-npx skills add <source> --skill <name> -g -y   # 用户级
-npx skills update [<name>] [-g|-p]             # 更新
-npx skills remove <name>                       # 卸载
+npx -y skills@latest add <source> --skill <name> -y      # 项目级（默认）
+npx -y skills@latest add <source> --skill <name> -g -y   # 用户级
+npx -y skills@latest update [<name>] [-g|-p]             # 更新
+npx -y skills@latest remove <name>                       # 卸载
 ```
 
 全局安装不要传 `-a codex`（会写入已弃用的 `~/.codex/skills`；Codex 的全局目录就是 `~/.agents/skills`）。
@@ -31,11 +31,11 @@ npx skills remove <name>                       # 卸载
 | `skill-manage` | Skill 管理流程：npx 安装约定，以及自建 Skill"修改 → 推送 → 刷新安装"闭环。 |
 | `webpage-clipper` | 将网页剪裁为本地 Markdown 并下载图片，用于笔记与资料归档。 |
 
-修改自建 Skill 的流程见 [skills/skill-manage/SKILL.md](skills/skill-manage/SKILL.md)：feature 分支修改 → 合入 `main` → 推送远程 → `npx skills update` 刷新本机安装。仓库公开，自建 Skill 内容不放敏感信息。
+修改自建 Skill 的流程见 [skills/skill-manage/SKILL.md](skills/skill-manage/SKILL.md)：feature 分支修改 → 合入 `main` → 推送远程 → `npx -y skills@latest update` 刷新本机安装。仓库公开，自建 Skill 内容不放敏感信息。
 
 ## 第三方 Skill 收藏
 
-只做记录，不复制上游源码。安装命令：`npx skills add <来源> --skill <Skill> [-g] -y`。
+只做记录，不复制上游源码。安装命令：`npx -y skills@latest add <来源> --skill <Skill> [-g] -y`。
 
 | Skill | 来源 | 说明 |
 | --- | --- | --- |
