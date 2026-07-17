@@ -1,3 +1,5 @@
 .DS_Store
 *.skill
+*.py[cod]
+__pycache__/
 node_modules/

@@ -1,4 +1,4 @@
 interface:
   display_name: "Skill Manage"
-  short_description: "安装、更新并维护自建与第三方 Skills 清单"
-  default_prompt: "使用 $skill-manage 按指定范围安装或更新 Skill，并维护 AFreeCoder/my-skills 的自建与第三方清单。"
+  short_description: "维护 Skill 事实源和共享安装目录"
+  default_prompt: "使用 $skill-manage 维护 AFreeCoder/my-skills，并按指定范围初始化、安装、更新、卸载或审计 Skill。"
