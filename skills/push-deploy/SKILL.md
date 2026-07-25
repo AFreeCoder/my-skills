@@ -46,7 +46,7 @@ If a candidate inherited unpublished commits from a local release branch, every 
 - Confirm whether the candidate came from the remote release baseline, an explicit prerequisite feature branch, or a named integration/release branch.
 - Identify whether the diff affects high-risk areas: auth, payment, billing, permissions, database, migrations, data deletion, routing removals, deploy scripts, rollback scripts, infrastructure, or public API contracts.
 - Record the pre-existing approval source for each included feature or release batch, such as the current release request, approved review, or release plan. Do not create approval evidence during the audit.
-- If the audit finds any unapproved or unrelated commit, stop. In a clean release worktree created from the fetched remote release baseline, rebuild the candidate with only changes that have pre-existing approval evidence and rerun every required check there. Do not push the local release branch as-is or retroactively expand the release batch. **REQUIRED SUB-SKILL:** Use `superpowers:using-git-worktrees`.
+- If the audit finds any unapproved or unrelated commit, stop. In a clean release worktree created from the fetched remote release baseline, rebuild the candidate with only changes that have pre-existing approval evidence and rerun every required check there. Do not push the local release branch as-is or retroactively expand the release batch.
 - If the current worktree is dirty even though the history scope is approved, perform release verification in the same kind of clean release worktree.
 - Uncommitted files are not part of a commit range. Preserve them, but never count them as released or let them enter the release candidate.
 
