@@ -20,7 +20,7 @@ description: 管理本地 Markdown 知识库与飞书知识库的项目空间，
 
 | 项目 | 本地 | 飞书 |
 | --- | --- | --- |
-| 项目名称 | 项目根目录名 | 知识空间名 |
+| 项目名称 | `20_wiki/<项目名>/` 中的目录名 | 知识空间名 |
 | 目录层级 | 子目录 | 同名 Wiki 目录节点 |
 | 文档标题 | 文件名去除 `.md` | Wiki 内 Markdown 文件名去除 `.md` |
 | 文档正文 | UTF-8 Markdown 正文 | 同字节 UTF-8 Markdown 正文 |
@@ -30,16 +30,17 @@ description: 管理本地 Markdown 知识库与飞书知识库的项目空间，
 ## 先决条件
 
 1. 先读取 `~/.claude/KNOWLEDGE.md`，获取本地知识库位置和其 Git 工作流；不要硬编码路径。
-2. 检查 `lark-cli --version`、`lark-cli auth status`。飞书操作始终显式使用 `--as user`。
-3. 未授权或用户 token 过期时，执行 `lark-cli auth login --domain wiki,markdown`；生成并展示 CLI 要求的二维码，等待用户完成授权后再继续。
-4. 读取 `lark-cli wiki --help`、`lark-cli markdown --help`。在使用不熟悉的参数前先查看对应 `--help` 或 `lark-cli schema`，不要猜 token 或 API 字段。
+2. 在知识库根目录定位 Wiki 容器。当前知识库使用 `20_wiki/`；项目的本地根目录必须是 `20_wiki/<项目名>/`，不能放在知识库根目录或其他区域。
+3. 检查 `lark-cli --version`、`lark-cli auth status`。飞书操作始终显式使用 `--as user`。
+4. 未授权或用户 token 过期时，执行 `lark-cli auth login --domain wiki,markdown`；生成并展示 CLI 要求的二维码，等待用户完成授权后再继续。
+5. 读取 `lark-cli wiki --help`、`lark-cli markdown --help`。在使用不熟悉的参数前先查看对应 `--help` 或 `lark-cli schema`，不要猜 token 或 API 字段。
 
 ## 项目模型
 
-每个项目在两端都使用完全相同的项目名，例如本地 `ShipArt/` 对应飞书空间 `ShipArt`。项目内建议但不强制采用下面的目录：
+每个项目在两端都使用完全相同的项目名，例如本地 `20_wiki/ShipArt/` 对应飞书空间 `ShipArt`。项目内建议但不强制采用下面的目录：
 
 ```text
-ShipArt/
+20_wiki/ShipArt/
 ├── 产品规划/
 ├── 项目管理/
 ├── 运营管理/
@@ -50,7 +51,7 @@ ShipArt/
 
 ## 初始化或接入项目
 
-1. 从本地项目根目录名得到项目名称，先检查飞书是否有同名空间：`lark-cli wiki +space-list --as user --format json`。
+1. 从本地 `20_wiki/<项目名>/` 的目录名得到项目名称，先检查飞书是否有同名空间：`lark-cli wiki +space-list --as user --format json`。
 2. 只有不存在精确同名空间时，才创建：`lark-cli wiki +space-create --as user --name '<项目名>'`。这是写操作；先向用户说明创建结果是私有团队知识空间。
 3. 同名空间多于一个时停止，让用户选择 `space_id`；不得根据描述、可见性或创建时间猜测。
 4. 在本地创建 `.kb-sync/<项目名>.json` 映射文件。它至少记录 `project_name`、`local_root`、`space_id`、目录对应的 `wiki_node_token`、文档对应的 `file_token`、`content_sha256` 和 `synced_at`。token 只保存在本地私有知识库，禁止提交到公开仓库或贴入回复。
@@ -64,7 +65,7 @@ ShipArt/
 
 1. 明确项目、目标相对路径、标题、正文和归类；缺少任一项时先提问。除非用户明确要求，不从对话中的零散信息自行扩写成正式记录。
 2. 先展示简短摘要、目标位置和拟写 Markdown；新增材料在用户给出内容时可直接执行，覆盖已有材料必须再次确认。
-3. 在本地项目根目录写入或更新 Markdown，文件名与飞书文件名保持一致。
+3. 在本地 `20_wiki/<项目名>/` 内写入或更新 Markdown，文件名与飞书文件名保持一致。
 4. 新文件调用 `markdown +create`；已有映射文件调用 `markdown +overwrite --file-token '<file_token>' --file '<本地文件>'`。
 5. 拉取远端文件并做字节哈希比对；一致后更新映射，并遵循 `KNOWLEDGE.md` 的 Git 流程提交和推送本地知识库。
 6. 任何一步失败时停止。不要把“仅本地已写入”或“仅飞书已更新”说成同步完成；报告实际成功的一侧、失败原因和安全恢复方式。
@@ -82,7 +83,7 @@ ShipArt/
 
 ## ShipArt 基线
 
-`ShipArt` 是 ShipArt 项目的知识库，主要记录：产品规划与建设、项目管理、运营管理和经验沉淀。它应映射到本地知识库中同名的 `ShipArt` 项目根目录，并使用同名的飞书知识空间。
+`ShipArt` 是 ShipArt 项目的知识库，主要记录：产品规划与建设、项目管理、运营管理和经验沉淀。它应映射到本地知识库的 `20_wiki/ShipArt/`，并使用同名的飞书知识空间 `ShipArt`。
 
 首次同步前，先盘点两端现状并向用户确认：本地项目根路径、飞书 `space_id`、现有目录树、候选文档映射和是否允许创建缺失的目录/文件。没有这次确认，不执行批量导入。
 
