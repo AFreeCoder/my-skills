@@ -14,7 +14,7 @@ description: 管理本地 Markdown 知识库与飞书知识库的项目空间，
 
 ## 核心约定
 
-本地 Markdown 是唯一内容真源；飞书保存同一份原生 Markdown 文件。不要把飞书在线文档的富文本导出再当作真源，因为格式转换会破坏“内容完全一致”的承诺。
+本地 Markdown 是唯一内容真源；飞书保存由该 Markdown 正文导入的原生 Docx 文档，不上传或展示 `.md` 附件。这样飞书端可以正常阅读、编辑和使用原生文档能力。
 
 “一致”指以下四项：
 
@@ -22,10 +22,10 @@ description: 管理本地 Markdown 知识库与飞书知识库的项目空间，
 | --- | --- | --- |
 | 项目名称 | `20_wiki/<项目名>/` 的目录名，且与飞书空间名完全相同 | 同一 `<项目名>` |
 | 目录层级 | 子目录 | 同名 Wiki 目录节点 |
-| 文档标题 | 文件名去除 `.md` | Wiki 内 Markdown 文件名去除 `.md` |
-| 文档正文 | UTF-8 Markdown 正文 | 同字节 UTF-8 Markdown 正文 |
+| 文档标题 | 文件名去除 `.md`，或 frontmatter 的 `title` | 同名 Docx 文档标题 |
+| 文档正文 | 去除 frontmatter 后的 Markdown 正文 | 由同一正文导入的 Docx 内容 |
 
-本地的 YAML frontmatter 是 Markdown 正文的一部分，必须原样同步。映射信息、同步日志和远端 token 是运行状态，不属于项目内容；只能放在本地知识库的 `.kb-sync/` 中，并且不得写入公开的 Skill 仓库。
+本地的 YAML frontmatter 是本地检索元数据，**绝不**同步到飞书文档。导入时还要避免重复一级标题：将页面标题传给飞书，正文删除同名的首个 `# 一级标题`。映射信息、同步日志和远端 token 是运行状态，不属于项目内容；只能放在本地知识库的 `.kb-sync/` 中，并且不得写入公开的 Skill 仓库。
 
 ## 先决条件
 
@@ -60,10 +60,10 @@ description: 管理本地 Markdown 知识库与飞书知识库的项目空间，
 1. 从本地 `20_wiki/<项目名>/` 的目录名得到项目名称，先检查飞书是否有同名空间：`lark-cli wiki +space-list --as user --format json`。
 2. 只有不存在精确同名空间时，才创建：`lark-cli wiki +space-create --as user --name '<项目名>'`。这是写操作；先向用户说明创建结果是私有团队知识空间。
 3. 同名空间多于一个时停止，让用户选择 `space_id`；不得根据描述、可见性或创建时间猜测。
-4. 在本地创建 `.kb-sync/<项目名>.json` 映射文件。它至少记录 `project_name`、`local_root`、`space_id`、目录对应的 `wiki_node_token`、文档对应的 `file_token`、`content_sha256` 和 `synced_at`。token 只保存在本地私有知识库，禁止提交到公开仓库或贴入回复。
+4. 在本地创建 `.kb-sync/<项目名>.json` 映射文件。它至少记录 `project_name`、`local_root`、`space_id`、目录对应的 `wiki_node_token`、文档对应的 `docx_token`、`rendered_body_sha256` 和 `synced_at`。token 只保存在本地私有知识库，禁止提交到公开仓库或贴入回复。
 5. 对每个本地目录，创建一个同名 Wiki `docx` 目录节点：`lark-cli wiki +node-create --as user --space-id '<space_id>' --parent-node-token '<父节点>' --title '<目录名>'`。根目录不另建同名节点，直接使用知识空间。
-6. 对每个 Markdown 文件，用 `lark-cli markdown +create --as user --wiki-token '<目录节点>' --file '<本地文件>'` 上传。若 CLI 不能从 `--file` 推导目标名，显式传 `--name '<文件名>.md'`。
-7. 上传后使用 `lark-cli markdown +fetch --as user --file-token '<file_token>'` 读取远端正文，计算两端 SHA-256。仅在哈希一致后写入或更新映射。
+6. 对每个 Markdown 文件，提取页面标题，去除 YAML frontmatter 与同名首个一级标题；通过 `lark-cli docs +create --as user --parent-token '<目录节点>' --doc-format markdown --title '<标题>' --content -` 创建原生 Docx 文档。长正文可通过 stdin 传入，避免在磁盘留下转换副本。
+7. 使用 `lark-cli docs +fetch --as user --doc '<docx_token>' --doc-format markdown` 读取飞书文档，确认不存在 YAML frontmatter、标题不重复，并校验导入后的正文结构、列表和代码块。对“页面标题 + 去元数据正文”计算 `rendered_body_sha256`，仅在与读取结果一致后写入或更新映射。
 
 ## 新增或更新材料：双端提交协议
 
@@ -71,21 +71,21 @@ description: 管理本地 Markdown 知识库与飞书知识库的项目空间，
 
 1. 明确项目、目标相对路径、标题、正文和归类；缺少任一项时先提问。除非用户明确要求，不从对话中的零散信息自行扩写成正式记录。
 2. 先展示简短摘要、目标位置和拟写 Markdown；新增材料在用户给出内容时可直接执行，覆盖已有材料必须再次确认。
-3. 在本地 `20_wiki/<项目名>/` 内写入或更新 Markdown，文件名与飞书文件名保持一致。
-4. 新文件调用 `markdown +create`；已有映射文件调用 `markdown +overwrite --file-token '<file_token>' --file '<本地文件>'`。
-5. 拉取远端文件并做字节哈希比对；一致后更新映射，并遵循 `KNOWLEDGE.md` 的 Git 流程提交和推送本地知识库。
+3. 在本地 `20_wiki/<项目名>/` 内写入或更新 Markdown，保留 frontmatter；先生成仅含页面标题与正文的飞书渲染载荷。
+4. 新文件调用 `docs +create --doc-format markdown`；已有映射文档调用 `docs +update --command overwrite --doc-format markdown`。两种情况都以对应 Wiki 目录节点为父级或现有 Docx token 为目标。
+5. 拉取飞书文档，检查其不含 YAML frontmatter、没有重复标题且结构正确；对渲染载荷做哈希校验，一致后更新映射，并遵循 `KNOWLEDGE.md` 的 Git 流程提交和推送本地知识库。
 6. 任何一步失败时停止。不要把“仅本地已写入”或“仅飞书已更新”说成同步完成；报告实际成功的一侧、失败原因和安全恢复方式。
 
 ## 冲突与修复
 
 同步前必须比较本地文件哈希、映射中的上次哈希与远端文件哈希：
 
-- 只有本地变更：本地覆盖飞书。
-- 只有飞书变更：先下载成候选文件并展示 diff；由用户决定接受飞书版本还是保留本地版本。
+- 只有本地变更：将去元数据的渲染载荷覆盖飞书 Docx。
+- 只有飞书变更：先导出为候选 Markdown，按“飞书标题/正文”与本地“标题/去元数据正文”展示 diff；由用户决定接受飞书版本还是保留本地版本。
 - 两端都变更：绝不自动合并或覆盖。生成三方 diff，等待用户选择或提供合并结果。
 - 映射缺失：先盘点本地文件和飞书节点/文件，输出候选匹配表。只有文件名、相对路径与正文哈希都能证明对应关系时才补建映射；其余由用户确认。
 
-不要删除任一端的材料来“恢复一致”。删除项目、空间、节点、文件或整个目录属于高风险写操作，必须单独获得明确授权。
+不要删除任一端的材料来“恢复一致”。删除项目、空间、节点、文件或整个目录属于高风险写操作，必须单独获得明确授权。发现历史 `.md` 附件时，先创建并校验替代 Docx，再单独确认是否删除该附件。
 
 ## 示例：ShipArt
 
