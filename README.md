@@ -19,7 +19,7 @@ npx -y skills@latest remove <name>                       # 卸载
 
 ## 自建 Skill
 
-当前共收录 `7` 个自建 Skill，安装来源均为 `AFreeCoder/my-skills`：
+当前共收录 `8` 个自建 Skill，安装来源均为 `AFreeCoder/my-skills`：
 
 | Skill | 说明 |
 | --- | --- |
@@ -27,6 +27,7 @@ npx -y skills@latest remove <name>                       # 卸载
 | `apipool-sync-upstream` | 审慎同步 APIPool 的 `upstream/main`，评估上游变更对本地长期定制的影响并完成合入验证。 |
 | `classic-to-default-sync` | 审计 `new-api` 的 classic 前端提交，并把缺失功能同步到 default 前端。 |
 | `i18n-translate` | 维护 `new-api` default 前端六种语言的翻译完整性与一致性。 |
+| `knowledge-base-manager` | 管理本地 Markdown 知识库与飞书知识库的项目映射和内容双端一致性。 |
 | `push-deploy` | 通用发布门禁：审计发布历史、监控 CI/CD、核查备份与回滚准备并验证线上服务。 |
 | `skill-manage` | Skill 管理流程：npx 安装约定，以及自建 Skill"修改 → 推送 → 刷新安装"闭环。 |
 | `webpage-clipper` | 将网页剪裁为本地 Markdown 并下载图片，用于笔记与资料归档。 |
