@@ -27,6 +27,16 @@ description: 管理本地 Markdown 知识库与飞书知识库的项目空间，
 
 本地 `20_wiki/<项目名>/` 中的 Markdown 是唯一内容真源；飞书保存由该 Markdown 正文导入的原生 Docx 文档，是可重建的同步视图，不上传或展示 `.md` 附件。这样飞书端可以正常阅读、编辑和使用原生文档能力，但不拥有内容裁决权。
 
+## 组织空间绑定
+
+项目同步默认使用组织知识库，不回退到个人知识库。每个项目的 `.kb-sync/<项目名>.json` 必须记录：
+
+- `lark_profile`：连接该组织内部应用的本机 `lark-cli` profile；
+- `space_scope`：固定为 `organization`；
+- `space_id`：该 profile 下精确名称匹配、且 `space_type` 为 `team` 的知识空间。
+
+所有飞书命令都显式携带 `--profile '<lark_profile>' --as user`。执行前先以该 profile 列出空间，并同时核验名称、`space_id` 和 `space_type=team`；不得在 profile 缺失、认证失败或只找到个人空间时静默改用默认 profile。需要新建空间时，也只能用此 profile 创建团队知识空间。
+
 “一致”指以下四项：
 
 | 项目 | 本地 | 飞书 |
@@ -42,8 +52,8 @@ description: 管理本地 Markdown 知识库与飞书知识库的项目空间，
 
 1. 先读取 `~/.claude/KNOWLEDGE.md`，获取本地知识库位置和其 Git 工作流；不要硬编码路径。
 2. 在知识库根目录定位 Wiki 容器。当前知识库使用 `20_wiki/`；对任意用户指定的 `<项目名>`，本地项目根目录固定为 `20_wiki/<项目名>/`，对应的飞书知识空间也必须精确命名为 `<项目名>`。
-3. 检查 `lark-cli --version`、`lark-cli auth status`。飞书操作始终显式使用 `--as user`。
-4. 未授权或用户 token 过期时，执行 `lark-cli auth login --domain wiki,markdown`；生成并展示 CLI 要求的二维码，等待用户完成授权后再继续。
+3. 读取已有映射中的 `lark_profile`，检查 `lark-cli --version`、`lark-cli --profile '<lark_profile>' auth status`。飞书操作始终显式使用该 profile 和 `--as user`。
+4. 未授权或用户 token 过期时，使用该 profile 执行 `lark-cli --profile '<lark_profile>' auth login --domain wiki,markdown`；生成并展示 CLI 要求的二维码，等待用户完成授权后再继续。
 5. 读取 `lark-cli wiki --help`、`lark-cli markdown --help`。在使用不熟悉的参数前先查看对应 `--help` 或 `lark-cli schema`，不要猜 token 或 API 字段。
 
 ## 项目模型
@@ -68,13 +78,13 @@ description: 管理本地 Markdown 知识库与飞书知识库的项目空间，
 
 ## 初始化或接入项目
 
-1. 从本地 `20_wiki/<项目名>/` 的目录名得到项目名称，先检查飞书是否有同名空间：`lark-cli wiki +space-list --as user --format json`。
-2. 只有不存在精确同名空间时，才创建：`lark-cli wiki +space-create --as user --name '<项目名>'`。这是写操作；先向用户说明创建结果是私有团队知识空间。
-3. 同名空间多于一个时停止，让用户选择 `space_id`；不得根据描述、可见性或创建时间猜测。
-4. 在本地创建 `.kb-sync/<项目名>.json` 映射文件。它至少记录 `project_name`、`local_root`、`space_id`、目录对应的 `wiki_node_token`、文档对应的 `docx_token`、`rendered_body_sha256` 和 `synced_at`。token 只保存在本地私有知识库，禁止提交到公开仓库或贴入回复。
-5. 对每个本地目录，创建一个同名 Wiki `docx` 目录节点：`lark-cli wiki +node-create --as user --space-id '<space_id>' --parent-node-token '<父节点>' --title '<目录名>'`。根目录不另建同名节点，直接使用知识空间。
-6. 对每个 Markdown 文件，提取页面标题，去除 YAML frontmatter 与同名首个一级标题；通过 `lark-cli docs +create --as user --parent-token '<目录节点>' --doc-format markdown --title '<标题>' --content -` 创建原生 Docx 文档。长正文可通过 stdin 传入，避免在磁盘留下转换副本。
-7. 使用 `lark-cli docs +fetch --as user --doc '<docx_token>' --doc-format markdown` 读取飞书文档，确认不存在 YAML frontmatter、标题不重复，并校验导入后的正文结构、列表和代码块。对“页面标题 + 去元数据正文”计算 `rendered_body_sha256`，仅在与读取结果一致后写入或更新映射。
+1. 从本地 `20_wiki/<项目名>/` 的目录名得到项目名称，使用已配置的组织 profile 检查飞书是否有同名团队空间：`lark-cli --profile '<lark_profile>' wiki +space-list --as user --format json`。
+2. 只有不存在精确同名且 `space_type=team` 的空间时，才创建：`lark-cli --profile '<lark_profile>' wiki +space-create --as user --name '<项目名>'`。这是写操作；先向用户说明创建结果是组织团队知识空间。
+3. 同名团队空间多于一个时停止，让用户选择 `space_id`；不得根据描述、可见性或创建时间猜测。只命中个人空间时停止，要求先配置组织 profile。
+4. 在本地创建 `.kb-sync/<项目名>.json` 映射文件。它至少记录 `project_name`、`local_root`、`lark_profile`、`space_scope: "organization"`、`space_id`、目录对应的 `wiki_node_token`、文档对应的 `docx_token`、`rendered_body_sha256` 和 `synced_at`。token 只保存在本地私有知识库，禁止提交到公开仓库或贴入回复。
+5. 对每个本地目录，创建一个同名 Wiki `docx` 目录节点：`lark-cli --profile '<lark_profile>' wiki +node-create --as user --space-id '<space_id>' --parent-node-token '<父节点>' --title '<目录名>'`。根目录不另建同名节点，直接使用知识空间。
+6. 对每个 Markdown 文件，提取页面标题，去除 YAML frontmatter 与同名首个一级标题；通过 `lark-cli --profile '<lark_profile>' docs +create --as user --parent-token '<目录节点>' --doc-format markdown --title '<标题>' --content -` 创建原生 Docx 文档。长正文可通过 stdin 传入，避免在磁盘留下转换副本。
+7. 使用 `lark-cli --profile '<lark_profile>' docs +fetch --as user --doc '<docx_token>' --doc-format markdown` 读取飞书文档，确认不存在 YAML frontmatter、标题不重复，并校验导入后的正文结构、列表和代码块。对“页面标题 + 去元数据正文”计算 `rendered_body_sha256`，仅在与读取结果一致后写入或更新映射。
 
 ## 新增或更新材料：双端提交协议
 
