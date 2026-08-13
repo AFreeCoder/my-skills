@@ -12,6 +12,7 @@ description: 管理 AFreeCoder 的 Skill：用 npx -y skills@latest 安装、更
 - 安装实体统一落在项目级 `.agents/skills/` 或用户级 `~/.agents/skills/`（skills CLI 的 canonical 目录）；Codex 直接读取该目录，Claude Code 经软链读取。
 - 仓库公开：自建 Skill 内容不得包含内网地址、密钥等敏感信息。
 - 用户未明确范围时默认项目级；明确说"用户级""全局"时加 `-g`。
+- 仅在用户明确提出安装、更新、卸载、收藏或修改 Skill 时执行这些操作；不要因为进入项目、读取仓库或执行只读任务而自动修改 Skill 目录或安装项。
 
 ## 安装、更新、卸载
 
