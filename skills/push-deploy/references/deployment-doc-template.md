@@ -38,10 +38,6 @@ Run these before push or deployment:
 # Add project-specific checks here.
 ```
 
-If any check is intentionally skipped, record the reason and risk.
-
-Also document how to fetch the release remote and audit the exact remote-baseline-to-candidate commit range before push.
-
 ## Deployment-Critical Files
 
 Read these before each deployment:
@@ -59,8 +55,6 @@ Read these before each deployment:
 - Retention policy:
 - What failure means:
 
-Deployment must stop if required backup creation or validation fails.
-
 ## Rollback and Recovery
 
 - Fastest service recovery path:
@@ -69,8 +63,6 @@ Deployment must stop if required backup creation or validation fails.
 - Migration rollback path:
 - Actions requiring explicit confirmation:
 - Verification after recovery:
-
-Prefer service restoration first. Use database restore only when persisted data or schema state requires it.
 
 ## Monitoring During Deployment
 
@@ -83,16 +75,12 @@ Prefer service restoration first. Use database restore only when persisted data 
 
 ## Success Criteria
 
-A deployment is complete only when all required criteria are true:
+Project-specific criteria that must all be true for a deployment to count as complete:
 
-- Target environment runs the expected commit, version, or artifact.
-- The released commit range contains only the approved scope and explicit dependencies.
-- CI/CD or deployment session completed successfully.
-- Required backup exists and passes sanity checks.
-- Rollback metadata or previous-version reference is ready.
-- Runtime health checks pass.
-- Critical logs and resources are clean enough for the release risk.
-- Required business or admin checks pass.
+- Expected commit, version, or artifact signal:
+- Required backup and rollback readiness signals:
+- Required health, log, and resource checks:
+- Required business or admin checks:
 
 ## Failure Handling
 
@@ -101,10 +89,6 @@ A deployment is complete only when all required criteria are true:
 - When to stop and ask:
 - When to recover immediately:
 - Evidence to collect:
-
-## Post-Deploy Documentation
-
-If the real process differs from this document, update this file after the service is stable.
 
 ## Git Reconciliation
 

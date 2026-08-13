@@ -60,18 +60,3 @@ Use this template after deployment monitoring completes. Replace every placehold
 - 部署文档是否需要更新：`<yes-or-no>`
 - 需要更新的点：`<doc-update-summary>`
 ```
-
-## Minimum Facts
-
-- fetched remote release baseline and candidate SHA
-- exact released commit range and approved scope
-- prerequisite or release-batch relationship, if any
-- pushed or deployed commit, version, or artifact
-- CI/CD run, platform deploy, or custom session result
-- live runtime version
-- runtime health result
-- backup artifact or metadata verification
-- rollback readiness or recovery result
-- local release branch and worktree reconciliation result
-- user-visible business impact
-- residual risk or watchpoint
