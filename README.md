@@ -19,15 +19,13 @@ npx -y skills@latest remove <name>                       # 卸载
 
 ## 自建 Skill
 
-当前共收录 `9` 个自建 Skill，安装来源均为 `AFreeCoder/my-skills`：
+当前共收录 `7` 个自建 Skill，安装来源均为 `AFreeCoder/my-skills`：
 
 | Skill | 说明 |
 | --- | --- |
 | `apipool-push-deploy` | 审查 APIPool 生产发布风险，验证 GitHub Actions 自动部署链路、备份、回滚和线上状态。 |
 | `apipool-sync-upstream` | 审慎同步 APIPool 的 `upstream/main`，评估上游变更对本地长期定制的影响并完成合入验证。 |
-| `classic-to-default-sync` | 审计 `new-api` 的 classic 前端提交，并把缺失功能同步到 default 前端。 |
 | `dev-flow` | Issue 驱动的开发流程：小任务全自动直通（创建 issue → 分析 → 实施 → 评审 → 发布），问题排查留档结论、修复与否由用户分流，大需求按阶段独立 issue 留档。 |
-| `i18n-translate` | 维护 `new-api` default 前端六种语言的翻译完整性与一致性。 |
 | `knowledge-base-manager` | 管理本地 Markdown 知识库与飞书知识库的项目映射和内容双端一致性。 |
 | `push-deploy` | 通用发布门禁：审计发布历史、监控 CI/CD、核查备份与回滚准备并验证线上服务。 |
 | `skill-manage` | Skill 管理流程：npx 安装约定，以及自建 Skill"修改 → 推送 → 刷新安装"闭环。 |
