@@ -8,12 +8,10 @@ AFreeCoder 的 Skill 唯一事实源：自建 Skill 源码 + 常用第三方 Ski
 
 ## 自建 Skill
 
-当前共收录 `7` 个自建 Skill，安装来源均为 `AFreeCoder/my-skills`：
+当前共收录 `5` 个自建 Skill，安装来源均为 `AFreeCoder/my-skills`：
 
 | Skill | 说明 |
 | --- | --- |
-| `apipool-push-deploy` | 审查 APIPool 生产发布风险，验证 GitHub Actions 自动部署链路、备份、回滚和线上状态。 |
-| `apipool-sync-upstream` | 审慎同步 APIPool 的 `upstream/main`，评估上游变更对本地长期定制的影响并完成合入验证。 |
 | `dev-flow` | Issue 驱动的开发流程：小任务全自动直通（创建 issue → 分析 → 实施 → 评审 → 发布），问题排查留档结论、修复与否由用户分流，大需求按阶段独立 issue 留档。 |
 | `knowledge-base-manager` | 管理本地 Markdown 知识库与飞书知识库的项目映射和内容双端一致性。 |
 | `push-deploy` | 通用发布门禁：审计发布历史、监控 CI/CD、核查备份与回滚准备并验证线上服务。 |
@@ -24,7 +22,7 @@ AFreeCoder 的 Skill 唯一事实源：自建 Skill 源码 + 常用第三方 Ski
 
 ## 第三方 Skill 收藏
 
-只做记录，不复制上游源码。
+只做记录，不复制上游源码。标注「私有」的来源仓库仅作者可访问，他人无法安装。
 
 | Skill | 来源 | 说明 |
 | --- | --- | --- |
@@ -43,9 +41,9 @@ AFreeCoder 的 Skill 唯一事实源：自建 Skill 源码 + 常用第三方 Ski
 | `find-animation-opportunities` | `emilkowalski/skills` | 发现界面中值得添加动效的位置。 |
 | `improve-animations` | `emilkowalski/skills` | 动效审计与改进路线图。 |
 | `review-animations` | `emilkowalski/skills` | 高标准动效代码评审。 |
-| `shipany-page-builder` | `AFreeCoder/shipany-template` | 按简述为 ShipAny 项目创建动态页面。 |
-| `shipany-quick-start` | `AFreeCoder/shipany-template` | 新 ShipAny 项目的首轮自动定制。 |
-| `supabase-to-d1` | `AFreeCoder/shipany-template` | Supabase PostgreSQL 迁移到 Cloudflare D1。 |
+| `shipany-page-builder` | `AFreeCoder/shipany-template`（私有） | 按简述为 ShipAny 项目创建动态页面。 |
+| `shipany-quick-start` | `AFreeCoder/shipany-template`（私有） | 新 ShipAny 项目的首轮自动定制。 |
+| `supabase-to-d1` | `AFreeCoder/shipany-template`（私有） | Supabase PostgreSQL 迁移到 Cloudflare D1。 |
 | `ui-ux-pro-max` | `nextlevelbuilder/ui-ux-pro-max-skill` | UI/UX 设计知识库（风格、配色、字体、组件）。 |
 | `shadcn` | `shadcn-ui/ui` | shadcn/ui 组件与项目管理。 |
 

@@ -16,12 +16,8 @@ from pathlib import Path
 from typing import Optional, Tuple
 from urllib.parse import urljoin, urlparse
 
-DEFAULT_VAULT_PATH = Path(
-    os.environ.get(
-        "OBSIDIAN_VAULT",
-        "/Users/afreecoder/Nutstore Files/工作空间/我的笔记",
-    )
-).expanduser().resolve()
+_VAULT_ENV = os.environ.get("OBSIDIAN_VAULT")
+DEFAULT_VAULT_PATH = Path(_VAULT_ENV).expanduser().resolve() if _VAULT_ENV else None
 
 
 def _slugify(text: str, fallback: str = "clipped-page") -> str:
@@ -718,13 +714,14 @@ def main() -> int:
     parser.add_argument("--url", required=True, help="网页 URL")
     parser.add_argument(
         "--out-dir",
-        default=str(DEFAULT_VAULT_PATH / "10_raw"),
-        help="输出目录（默认 Obsidian 10_raw）",
+        default=str(DEFAULT_VAULT_PATH / "10_raw") if DEFAULT_VAULT_PATH else None,
+        required=DEFAULT_VAULT_PATH is None,
+        help="输出目录（未设置 OBSIDIAN_VAULT 时必填，否则默认 $OBSIDIAN_VAULT/10_raw）",
     )
     parser.add_argument(
         "--assets-dir",
-        default=str(DEFAULT_VAULT_PATH / "assets"),
-        help="图片输出目录（相对 out-dir 或绝对路径）",
+        default=str(DEFAULT_VAULT_PATH / "assets") if DEFAULT_VAULT_PATH else None,
+        help="图片输出目录（相对 out-dir 或绝对路径，默认 out-dir/assets）",
     )
     parser.add_argument("--title", default=None, help="标题覆盖")
     parser.add_argument("--engine", choices=["requests", "browser"], default="requests", help="获取方式")
