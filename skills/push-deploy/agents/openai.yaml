@@ -1,4 +1,0 @@
-interface:
-  display_name: "Push Deploy"
-  short_description: "按项目部署手册推送、监控部署并核验备份回滚"
-  default_prompt: "Use $push-deploy to release the current project according to docs/deployment.md."

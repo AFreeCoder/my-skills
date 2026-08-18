@@ -1,4 +1,0 @@
-interface:
-  display_name: "Skill Manage"
-  short_description: "用 npx skills 管理 Skill 并闭环推送自建修改"
-  default_prompt: "使用 $skill-manage 安装、更新或卸载 Skill，或修改 my-skills 自建 Skill 并完成推送与安装刷新。"
