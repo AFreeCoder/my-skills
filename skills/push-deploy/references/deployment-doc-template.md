@@ -1,97 +1,97 @@
-# Deployment Document Template
+# 部署文档模板
 
-Use this template for a repository's `docs/deployment.md`. Replace placeholders with project-specific facts from the repository and deployment environment. Do not include secrets, tokens, private keys, passwords, or sensitive customer data.
+本模板用于生成目标仓库的 `docs/deployment.md`。把占位符替换为该仓库和其部署环境的具体事实。不要写入密钥、token、私钥、密码或敏感客户数据。
 
-## Release Target
+## 发布目标
 
-- Release remote:
-- Release branch:
-- Canonical published baseline:
-- Integration or release-candidate branch, if any:
-- Release environments:
-- Production URL or health endpoint:
-- Staging URL or health endpoint:
-- Owner or escalation contact:
+- 发布远端：
+- 发布分支：
+- 权威已发布基线：
+- 集成分支或候选发布分支（如有）：
+- 发布环境：
+- 生产 URL 或健康检查端点：
+- 预发 URL 或健康检查端点：
+- 负责人或升级联系人：
 
-## Trigger
+## 触发方式
 
-- Deployment trigger:
-- CI/CD workflow, platform, or command:
-- Manual inputs, if any:
-- Expected deployment duration:
-- Concurrency or deploy-lock behavior:
+- 部署触发条件：
+- CI/CD workflow、平台或命令：
+- 手动输入项（如有）：
+- 预期部署耗时：
+- 并发或部署锁行为：
 
-## Runtime Architecture
+## 运行时架构
 
-- Runtime units:
-- Reverse proxy or edge layer:
-- Databases and persistent stores:
-- Caches, queues, workers, scheduled jobs, or background processors:
-- Important ports, domains, or internal endpoints:
-- Runtime config files:
+- 运行单元：
+- 反向代理或边缘层：
+- 数据库与持久化存储：
+- 缓存、队列、worker、定时任务或后台处理器：
+- 重要端口、域名或内部端点：
+- 运行时配置文件：
 
-## Pre-Deploy Checks
+## 部署前检查
 
-Run these before push or deployment:
+推送或部署之前执行：
 
 ```bash
-# Add project-specific checks here.
+# 在此填入项目特定的检查命令。
 ```
 
-## Deployment-Critical Files
+## 部署关键文件
 
-Read these before each deployment:
+每次部署前必读：
 
 - `README.md`
 - `docs/deployment.md`
-- Add CI/CD workflows, deploy scripts, compose files, platform config, migration scripts, rollback tools, and release notes here.
+- 在此补充 CI/CD workflow、部署脚本、compose 文件、平台配置、迁移脚本、回滚工具和发布说明。
 
-## Backup Requirements
+## 备份要求
 
-- Backup trigger:
-- Backup artifact or metadata:
-- Backup location:
-- Sanity check:
-- Retention policy:
-- What failure means:
+- 备份触发时机：
+- 备份产物或元数据：
+- 备份存放位置：
+- 完整性检查方式：
+- 保留策略：
+- 备份失败意味着什么：
 
-## Rollback and Recovery
+## 回滚与恢复
 
-- Fastest service recovery path:
-- Previous-version or artifact rollback path:
-- Database restore path:
-- Migration rollback path:
-- Actions requiring explicit confirmation:
-- Verification after recovery:
+- 最快的服务恢复路径：
+- 上一版本或产物回滚路径：
+- 数据库恢复路径：
+- 迁移回滚路径：
+- 需要明确确认才能执行的动作：
+- 恢复后的验证方式：
 
-## Monitoring During Deployment
+## 部署期间的监控
 
-- CI/CD status command or dashboard:
-- Runtime version check:
-- Health check:
-- Log checks:
-- Resource checks:
-- Business or admin checks:
+- CI/CD 状态命令或看板：
+- 运行时版本核对：
+- 健康检查：
+- 日志检查：
+- 资源检查：
+- 业务或管理后台检查：
 
-## Success Criteria
+## 完成标准
 
-Project-specific criteria that must all be true for a deployment to count as complete:
+以下项目特定标准必须全部成立，本次部署才算完成：
 
-- Expected commit, version, or artifact signal:
-- Required backup and rollback readiness signals:
-- Required health, log, and resource checks:
-- Required business or admin checks:
+- 预期的提交、版本或产物标识：
+- 必需的备份与回滚就绪信号：
+- 必需的健康、日志与资源检查：
+- 必需的业务或管理后台检查：
 
-## Failure Handling
+## 失败处置
 
-- Failure before live impact:
-- Failure after live impact:
-- When to stop and ask:
-- When to recover immediately:
-- Evidence to collect:
+- 影响线上之前失败：
+- 影响线上之后失败：
+- 何时停下来询问：
+- 何时立即恢复：
+- 需要收集的证据：
 
-## Git Reconciliation
+## Git 收口
 
-- Local release branch synchronization policy:
-- Feature/release worktree cleanup policy:
-- Branch retention and deletion policy:
+- 本地发布分支同步策略：
+- feature/release worktree 清理策略：
+- 分支保留与删除策略：

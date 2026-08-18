@@ -1,8 +1,8 @@
-# Release Report Template
+# 发布报告模板
 
-Use this template after deployment monitoring completes. Replace every placeholder with concrete facts from the current release.
+部署监控结束后按本模板撰写。把每个占位符替换为本次发布的具体事实。
 
-## Short Report
+## 简版报告
 
 ```md
 本次发布基于 `<remote-release-branch>@<baseline-sha>`，发布范围是 `<baseline-sha>..<candidate-sha>`，包含 `<approved-scope>`。发布标识是 `<commit-or-version>`。
@@ -19,7 +19,7 @@ Use this template after deployment monitoring completes. Replace every placehold
 剩余风险或观察项：`<watchpoints-or-none>`。
 ```
 
-## Full Report
+## 完整报告
 
 ```md
 发布结果：`<success-failed-rolled-back-or-blocked>`

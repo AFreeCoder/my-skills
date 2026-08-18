@@ -1,93 +1,93 @@
 ---
 name: push-deploy
-description: Use when releasing code to production or staging, auditing unpublished or mixed-scope branch/worktree history, pushing deployment commits, monitoring CI/CD, verifying backups and rollback readiness, handling deployment failures, or restoring live service during a release.
+description: 通用发布门禁：把代码发布到生产或预发环境、审计未发布或范围混杂的分支与 worktree 历史、推送发布提交、监控 CI/CD、核查备份与回滚准备、处置发布失败、在发布过程中恢复线上服务。当用户说"上线""发布""推代码到生产""盯一下部署""确认能不能回滚""发布失败了"等类似请求时使用。
 ---
 
 # Push Deploy
 
-## Overview
+## 概述
 
-Use this skill when code is ready to release and the user wants the agent to push, trigger deployment, monitor rollout, and verify recovery safeguards. The skill defines release discipline only; project-specific facts must come from the target repository.
+代码已经具备发布条件，用户希望 agent 完成推送、触发部署、监控上线并验证恢复手段时，使用本 Skill。本 Skill 只定义发布纪律；项目特定的事实必须从目标仓库读取。
 
-## Core Rules
+## 核心规则
 
-- Do not hardcode project names, service names, host names, workflow names, backup filenames, paths, ports, or rollback commands. Read them from the repository's deployment documentation and current deploy files. The canonical deployment document is `docs/deployment.md`; if it is missing or clearly stale, stop before deploying and create or repair it first using `references/deployment-doc-template.md`.
-- After fetching, the remote-tracking release branch is the published baseline. A newer local release branch is only a release candidate; being newer, or passing tests, never makes it deployable by itself.
-- Release scope is defined by pre-existing approval evidence only: the current release request, an approved review, a release plan, or an explicitly named release batch. Approval evidence is never created or expanded during the release audit. Every commit in `<remote>/<release-branch>..candidate` must belong to that scope.
-- Choose the development baseline by change relationship: an independent feature starts from the current remote-tracking release branch; a feature with an unmerged prerequisite starts from that explicit prerequisite branch; features approved to ship together use a named integration or release branch.
-- If the audited range contains unapproved or unrelated commits, or the worktree is dirty, stop and follow `references/release-audit.md` before any push.
+- 不要硬编码项目名、服务名、主机名、workflow 名、备份文件名、路径、端口或回滚命令。这些一律从仓库的部署文档和当前部署文件中读取。权威部署文档是 `docs/deployment.md`；如果它缺失或明显过期，先停止部署，用 `references/deployment-doc-template.md` 创建或修复它。
+- fetch 之后，远程跟踪的发布分支才是已发布基线。本地发布分支更新只说明它是候选版本；"更新"或"测试通过"本身都不构成可发布的理由。
+- 发布范围只由**事先已存在**的批准证据界定：当前发布请求、已通过的评审、发布计划，或明确命名的发布批次。批准证据绝不能在发布审计过程中现场创建或扩大。`<remote>/<release-branch>..candidate` 中的每个提交都必须属于该范围。
+- 按变更关系选择开发基线：独立功能从当前远程跟踪的发布分支起步；有未合入前置依赖的功能从该前置分支起步；被批准一起发布的功能使用命名的集成分支或发布分支。
+- 如果审计范围内包含未批准或不相关的提交，或工作区不干净，停止并按 `references/release-audit.md` 处置，然后才能推送。
 
-## Workflow
+## 工作流
 
-### 1. Build Release Context
+### 1. 建立发布上下文
 
-- Read `README.md` and `docs/deployment.md`, then every deployment-critical file it lists, such as CI/CD workflows, deploy scripts, compose or platform config, migration scripts, rollback tools, or release notes. If the documented process contradicts the current files, stop and resolve the mismatch before production deployment.
-- Fetch the release remote with pruning. Record the remote baseline SHA, candidate SHA, current branch, all linked worktrees, worktree status, and ahead/behind relationship.
-- Audit the exact `<remote>/<release-branch>..candidate` log and diff. Confirm the candidate's development baseline and the pre-existing approval source for every included feature or release batch. Uncommitted files are not part of the range: preserve them, but never count them as released.
-- Identify whether the diff affects high-risk areas: auth, payment, billing, permissions, database, migrations, data deletion, routing removals, deploy scripts, rollback scripts, infrastructure, or public API contracts.
-- On any scope violation or dirty worktree, switch to `references/release-audit.md`.
+- 读 `README.md` 和 `docs/deployment.md`，再读它列出的每个部署关键文件，例如 CI/CD workflow、部署脚本、compose 或平台配置、迁移脚本、回滚工具、发布说明。如果文档描述的流程与当前文件矛盾，先解决矛盾，不要带着分歧上生产。
+- fetch 发布远端并 prune。记录远端基线 SHA、候选 SHA、当前分支、所有关联 worktree、worktree 状态，以及 ahead/behind 关系。
+- 精确审计 `<remote>/<release-branch>..candidate` 的 log 和 diff。确认候选版本的开发基线，以及其中每个功能或发布批次**事先已存在**的批准来源。未提交的文件不属于该范围：保留它们，但绝不计入已发布内容。
+- 判断 diff 是否触及高风险区域：认证、支付、计费、权限、数据库、迁移、数据删除、路由移除、部署脚本、回滚脚本、基础设施或对外 API 契约。
+- 一旦发现范围越界或工作区不干净，转到 `references/release-audit.md`。
 
-### 2. Make the Pre-Deploy Judgment Explicit
+### 2. 明确给出发布前判断
 
-Before pushing or triggering a production deployment, explain:
+在推送或触发生产部署之前，说清楚：
 
-- what online behavior may change
-- what high-risk areas are touched
-- what local checks were run or skipped
-- why backup and rollback safeguards are expected to work
-- the fastest safe recovery path declared by the project
+- 线上行为可能发生什么变化
+- 触及了哪些高风险区域
+- 本地跑了哪些检查、跳过了哪些
+- 为什么预期备份和回滚手段是有效的
+- 项目声明的最快安全恢复路径是什么
 
-Ask for confirmation before push or production deployment unless the user has already explicitly delegated that action for this release.
+除非用户已经针对本次发布明确授权该动作，否则在推送或生产部署前请求确认。
 
-### 3. Verify Locally
+### 3. 本地验证
 
-- Run the checks declared by `docs/deployment.md`; use broader validation for broad, risky, or cross-cutting changes.
-- If a check cannot run, state the exact blocker and residual risk before proceeding.
-- If deployment files changed, validate the deployment configuration using the project-declared command.
+- 运行 `docs/deployment.md` 声明的检查；变更面广、风险高或涉及横切关注点时，采用更宽的验证范围。
+- 如果某项检查无法执行，在继续之前说明确切的阻塞原因和残留风险。
+- 如果部署文件发生变更，用项目声明的命令校验部署配置。
 
-### 4. Push and Locate Deployment
+### 4. 推送并定位部署
 
-- Fetch the release remote again immediately before push. If the baseline moved, update the candidate, reconfirm the audited commit range and clean worktree state, and rerun every affected check.
-- Push only the audited candidate SHA to the documented release branch, or trigger only the documented release action.
-- Locate the CI/CD run, platform deploy, or custom deploy session declared by `docs/deployment.md` and watch it; never treat a successful push as a successful release.
+- 推送前再次 fetch 发布远端。如果基线移动了，更新候选版本，重新确认审计过的提交范围和工作区干净状态，并重跑所有受影响的检查。
+- 只把审计过的候选 SHA 推送到文档记录的发布分支，或只触发文档记录的发布动作。
+- 定位 `docs/deployment.md` 声明的 CI/CD 运行、平台部署或自定义部署会话并持续观察；推送成功绝不等于发布成功。
 
-### 5. Monitor Rollout
+### 5. 监控上线
 
-Monitor CI/CD and the runtime environment together, using the commands and success signals declared in `docs/deployment.md`, to verify:
+同时监控 CI/CD 和运行时环境，使用 `docs/deployment.md` 声明的命令与成功信号，验证：
 
-- the target environment is running the expected commit or version
-- required pre-deploy backups exist and pass the documented sanity check
-- rollback metadata, rollback artifact, or previous-version reference is available
-- services, containers, processes, or platform instances are healthy
-- critical logs do not show boot, migration, auth, permission, network, or resource failures
-- host or platform resources are within the documented safe range
-- external health endpoints, important user flows, or admin checks pass when documented
+- 目标环境运行的是预期的提交或版本
+- 必需的部署前备份已存在，并通过文档记录的完整性检查
+- 回滚元数据、回滚产物或上一版本引用可用
+- 服务、容器、进程或平台实例健康
+- 关键日志没有出现启动、迁移、认证、权限、网络或资源类失败
+- 主机或平台资源处于文档记录的安全区间内
+- 文档有要求时，外部健康检查端点、重要用户流程或管理后台检查通过
 
-### 6. Handle Failures Deliberately
+### 6. 审慎处置失败
 
-- If deployment fails before affecting live service, stop, collect the failing step, logs, runtime state, and next repair recommendation.
-- If the new version is live and user-visible service is degraded, prioritize the fastest recovery path declared by `docs/deployment.md`.
-- Do not perform database restore, destructive migration rollback, data deletion, environment rebuild, credential rotation, or other irreversible actions without fresh explicit confirmation.
-- After any rollback or recovery action, verify the service is healthy again and record the restored version or artifact.
+- 如果部署在影响线上服务之前失败，停止，收集失败步骤、日志、运行时状态和下一步修复建议。
+- 如果新版本已经上线且用户可见的服务出现降级，优先执行 `docs/deployment.md` 声明的最快恢复路径。
+- 未经再次明确确认，不要执行数据库恢复、破坏性迁移回滚、数据删除、环境重建、凭证轮换等不可逆动作。
+- 任何回滚或恢复动作之后，验证服务重新健康，并记录恢复到的版本或产物。
 
-### 7. Report Outcome
+### 7. 汇报结果
 
-Write the release report from `references/report-template.md`. Do not declare a release complete from CI/CD success alone; completion requires runtime, backup, rollback, and health evidence.
+按 `references/report-template.md` 撰写发布报告。不要仅凭 CI/CD 成功就宣布发布完成；完成需要运行时、备份、回滚和健康检查四方面的证据。
 
-### 8. Reconcile Git State
+### 8. 收口 Git 状态
 
-- Fetch the release remote and verify its release branch points to the deployed candidate.
-- Synchronize the local release branch only when the update is clean and fast-forward safe. Preserve unrelated local changes; never reset or overwrite them as cleanup.
-- Remove only feature/release worktrees that are clean and whose commits are merged or otherwise preserved on an explicit branch; delete only merged branches that are no longer needed, then prune stale worktree metadata.
-- Keep active prerequisite, integration, or unreleased branches. Report anything intentionally retained.
+- fetch 发布远端，确认其发布分支指向已部署的候选版本。
+- 只在更新干净且 fast-forward 安全时同步本地发布分支。保留不相关的本地改动；绝不以"清理"为由 reset 或覆盖它们。
+- 只删除干净且其提交已合入、或已在明确分支上留存的 feature/release worktree；只删除已合入且不再需要的分支，然后清理过期的 worktree 元数据。
+- 保留仍在使用的前置分支、集成分支或未发布分支。有意保留的内容要在报告中说明。
 
-### 9. Update Deployment Documentation
+### 9. 更新部署文档
 
-After the service is stable, update `docs/deployment.md` when the actual release process differed from the document. Record process, commands, checks, and success criteria only. Do not write secrets, tokens, passwords, private keys, or sensitive customer data.
+服务稳定之后，如果实际发布流程与文档不符，更新 `docs/deployment.md`。只记录流程、命令、检查和成功标准。不要写入密钥、token、密码、私钥或敏感客户数据。
 
-## Reference Use
+## 参考资料用法
 
-- `references/release-audit.md`: handling scope violations, inherited commits, or dirty worktrees found during the audit.
-- `references/deployment-doc-template.md`: creating or repairing `docs/deployment.md`.
-- `references/report-template.md`: preparing the final release report.
-- For project-specific commands, prefer `docs/deployment.md` over memory or assumptions.
+- `references/release-audit.md`：处置审计中发现的范围越界、继承提交或工作区不干净。
+- `references/deployment-doc-template.md`：创建或修复 `docs/deployment.md`。
+- `references/report-template.md`：撰写最终发布报告。
+- 涉及项目特定命令时，以 `docs/deployment.md` 为准，不要依赖记忆或猜测。

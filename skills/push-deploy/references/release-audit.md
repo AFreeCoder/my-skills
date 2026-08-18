@@ -1,27 +1,27 @@
-# Release Scope Audit
+# 发布范围审计
 
-Read this when the release-context audit finds unapproved or unrelated commits in `<remote>/<release-branch>..candidate`, commits inherited from a local release branch, or a dirty worktree.
+当发布上下文审计发现 `<remote>/<release-branch>..candidate` 中存在未批准或不相关的提交、从本地发布分支继承而来的提交，或工作区不干净时，阅读本文件。
 
-## Inherited Commits
+## 继承提交
 
-If the candidate inherited unpublished commits from a local release branch, every inherited commit is part of the release candidate. The full range is valid only when those commits were explicitly approved before the release audit as one named release batch. Otherwise the candidate must be rebuilt. Never hide inherited commits behind the newest feature name, and never grant retroactive batch approval during the audit.
+如果候选版本从本地发布分支继承了未发布的提交，那么每一个继承提交都属于本次候选版本。只有当这些提交在发布审计**之前**就已作为一个命名发布批次获得批准时，整个范围才成立。否则必须重建候选版本。绝不要把继承提交藏在最新功能的名义之下，也绝不要在审计过程中追认批次批准。
 
-## Common Rationalizations
+## 常见的自我合理化
 
-| Rationalization | Why it fails |
+| 说法 | 为什么不成立 |
 |---|---|
-| "Local main is newer" | Newness is not deployment authorization; audit from the fetched remote baseline. |
-| "Those inherited commits will ship soon anyway" | They remain out of scope unless already approved in a named release batch. |
-| "All tests pass, so approve the mixed range now" | Tests do not define release authorization. |
-| "The dirty files will not be staged" | Release evidence must come from a clean worktree to be auditable. |
+| "本地 main 更新" | 更新不等于发布授权；审计必须从 fetch 到的远端基线出发。 |
+| "那些继承提交反正很快也要发" | 除非已在命名发布批次中获得批准，否则它们仍在范围之外。 |
+| "测试全过了，混合范围就一起批了吧" | 测试不构成发布授权。 |
+| "那些未提交的脏文件不会被 stage" | 发布证据必须来自干净的工作区才可审计。 |
 
-## Rebuilding a Clean Candidate
+## 重建干净的候选版本
 
-1. Create a clean release worktree from the fetched remote release baseline.
-2. Bring in only changes that have pre-existing approval evidence.
-3. Rerun every required check there.
-4. Continue the release workflow with the rebuilt candidate. Never push the original mixed-scope branch as-is.
+1. 从 fetch 到的远端发布基线创建一个干净的发布 worktree。
+2. 只引入**事先已有**批准证据的变更。
+3. 在该 worktree 中重跑所有必需的检查。
+4. 用重建后的候选版本继续发布流程。绝不要把原来范围混杂的分支原样推送。
 
-## Dirty Worktree with Approved Scope
+## 范围已批准但工作区不干净
 
-If the history scope is approved but the current worktree is dirty, perform release verification in the same kind of clean release worktree so the release evidence stays isolated and auditable. Preserve uncommitted files; they never enter the release candidate and are never counted as released.
+如果历史范围已获批准，但当前工作区不干净，就在同样的干净发布 worktree 中执行发布验证，使发布证据保持隔离和可审计。保留未提交的文件；它们绝不进入候选版本，也绝不计入已发布内容。
