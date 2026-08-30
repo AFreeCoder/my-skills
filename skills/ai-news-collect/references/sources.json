@@ -1,0 +1,328 @@
+[
+  {
+    "id": "openai-news",
+    "name": "OpenAI News",
+    "kind": "feed",
+    "products": [
+      "OpenAI"
+    ],
+    "url": "https://openai.com/news/",
+    "endpoints": [
+      "https://openai.com/news/rss.xml"
+    ],
+    "article_body": true
+  },
+  {
+    "id": "openai-api-changelog",
+    "name": "OpenAI API Changelog",
+    "kind": "page",
+    "products": [
+      "OpenAI"
+    ],
+    "url": "https://developers.openai.com/api/docs/changelog",
+    "endpoints": [
+      "https://developers.openai.com/api/docs/changelog.md",
+      "https://developers.openai.com/api/docs/changelog"
+    ]
+  },
+  {
+    "id": "chatgpt-release-notes",
+    "name": "ChatGPT Release Notes",
+    "kind": "page",
+    "products": [
+      "ChatGPT"
+    ],
+    "url": "https://help.openai.com/en/articles/6825453-chatgpt-release-notes"
+  },
+  {
+    "id": "chatgpt-codex-changelog",
+    "name": "ChatGPT / Codex Changelog",
+    "kind": "page",
+    "products": [
+      "ChatGPT",
+      "Codex"
+    ],
+    "url": "https://learn.chatgpt.com/docs/changelog",
+    "endpoints": [
+      "https://learn.chatgpt.com/docs/changelog",
+      "https://developers.openai.com/codex/changelog"
+    ]
+  },
+  {
+    "id": "codex-releases",
+    "name": "Codex GitHub Releases",
+    "kind": "feed",
+    "products": [
+      "Codex"
+    ],
+    "url": "https://github.com/openai/codex/releases",
+    "endpoints": [
+      "https://github.com/openai/codex/releases.atom"
+    ]
+  },
+  {
+    "id": "openai-developers",
+    "name": "OpenAI Developers",
+    "kind": "feed",
+    "products": [
+      "OpenAI",
+      "Codex"
+    ],
+    "url": "https://developers.openai.com/",
+    "endpoints": [
+      "https://developers.openai.com/rss.xml"
+    ],
+    "article_body": true
+  },
+  {
+    "id": "openai-deprecations",
+    "name": "OpenAI Deprecations",
+    "kind": "page",
+    "products": [
+      "OpenAI"
+    ],
+    "url": "https://developers.openai.com/api/docs/deprecations",
+    "endpoints": [
+      "https://developers.openai.com/api/docs/deprecations.md",
+      "https://developers.openai.com/api/docs/deprecations"
+    ]
+  },
+  {
+    "id": "openai-status",
+    "name": "OpenAI Status",
+    "kind": "feed",
+    "products": [
+      "OpenAI",
+      "ChatGPT",
+      "Codex"
+    ],
+    "url": "https://status.openai.com/",
+    "endpoints": [
+      "https://status.openai.com/history.rss"
+    ]
+  },
+  {
+    "id": "anthropic-news",
+    "name": "Anthropic News",
+    "kind": "page",
+    "products": [
+      "Anthropic"
+    ],
+    "url": "https://www.anthropic.com/news",
+    "article_path": "/news/"
+  },
+  {
+    "id": "claude-blog",
+    "name": "Claude Blog",
+    "kind": "page",
+    "products": [
+      "Claude"
+    ],
+    "url": "https://claude.com/blog",
+    "article_path": "/blog/"
+  },
+  {
+    "id": "claude-release-notes",
+    "name": "Claude Release Notes",
+    "kind": "page",
+    "products": [
+      "Claude"
+    ],
+    "url": "https://support.claude.com/en/articles/12138966-release-notes"
+  },
+  {
+    "id": "claude-code-changelog",
+    "name": "Claude Code Changelog",
+    "kind": "feed",
+    "products": [
+      "Claude Code"
+    ],
+    "url": "https://code.claude.com/docs/en/changelog",
+    "endpoints": [
+      "https://code.claude.com/docs/en/changelog/rss.xml",
+      "https://github.com/anthropics/claude-code/releases.atom"
+    ],
+    "related_urls": [
+      "https://code.claude.com/docs/en/changelog.md",
+      "https://github.com/anthropics/claude-code/blob/main/CHANGELOG.md",
+      "https://raw.githubusercontent.com/anthropics/claude-code/main/CHANGELOG.md"
+    ]
+  },
+  {
+    "id": "claude-platform-release-notes",
+    "name": "Claude Platform Release Notes",
+    "kind": "page",
+    "products": [
+      "Anthropic",
+      "Claude"
+    ],
+    "url": "https://platform.claude.com/docs/en/release-notes/overview",
+    "endpoints": [
+      "https://platform.claude.com/docs/en/release-notes/overview.md",
+      "https://platform.claude.com/docs/en/release-notes/overview"
+    ]
+  },
+  {
+    "id": "anthropic-engineering",
+    "name": "Anthropic Engineering",
+    "kind": "page",
+    "products": [
+      "Anthropic"
+    ],
+    "url": "https://www.anthropic.com/engineering",
+    "article_path": "/engineering/"
+  },
+  {
+    "id": "claude-status",
+    "name": "Claude Status",
+    "kind": "feed",
+    "products": [
+      "Anthropic",
+      "Claude",
+      "Claude Code"
+    ],
+    "url": "https://status.claude.com/",
+    "endpoints": [
+      "https://status.claude.com/history.rss"
+    ]
+  },
+  {
+    "id": "x-openai",
+    "name": "@OpenAI",
+    "kind": "x",
+    "products": [
+      "OpenAI"
+    ],
+    "url": "https://x.com/OpenAI"
+  },
+  {
+    "id": "x-openaidevs",
+    "name": "@OpenAIDevs",
+    "kind": "x",
+    "products": [
+      "OpenAI",
+      "Codex"
+    ],
+    "url": "https://x.com/OpenAIDevs"
+  },
+  {
+    "id": "x-chatgpt",
+    "name": "@ChatGPT",
+    "kind": "x",
+    "products": [
+      "ChatGPT"
+    ],
+    "url": "https://x.com/ChatGPT"
+  },
+  {
+    "id": "x-anthropicai",
+    "name": "@AnthropicAI",
+    "kind": "x",
+    "products": [
+      "Anthropic"
+    ],
+    "url": "https://x.com/AnthropicAI"
+  },
+  {
+    "id": "x-claudeai",
+    "name": "@claudeai",
+    "kind": "x",
+    "products": [
+      "Claude"
+    ],
+    "url": "https://x.com/claudeai"
+  },
+  {
+    "id": "x-claudedevs",
+    "name": "@ClaudeDevs",
+    "kind": "x",
+    "products": [
+      "Claude",
+      "Claude Code"
+    ],
+    "url": "https://x.com/ClaudeDevs"
+  },
+  {
+    "id": "x-thsottiaux",
+    "name": "Tibo / @thsottiaux",
+    "kind": "x",
+    "products": [
+      "Codex"
+    ],
+    "url": "https://x.com/thsottiaux"
+  },
+  {
+    "id": "x-embirico",
+    "name": "Alexander Embiricos / @embirico",
+    "kind": "x",
+    "products": [
+      "Codex"
+    ],
+    "url": "https://x.com/embirico"
+  },
+  {
+    "id": "x-romainhuet",
+    "name": "Romain Huet / @romainhuet",
+    "kind": "x",
+    "products": [
+      "OpenAI",
+      "Codex"
+    ],
+    "url": "https://x.com/romainhuet"
+  },
+  {
+    "id": "x-sama",
+    "name": "Sam Altman / @sama",
+    "kind": "x",
+    "products": [
+      "OpenAI"
+    ],
+    "url": "https://x.com/sama"
+  },
+  {
+    "id": "x-gdb",
+    "name": "Greg Brockman / @gdb",
+    "kind": "x",
+    "products": [
+      "OpenAI"
+    ],
+    "url": "https://x.com/gdb"
+  },
+  {
+    "id": "x-bcherny",
+    "name": "Boris Cherny / @bcherny",
+    "kind": "x",
+    "products": [
+      "Claude Code"
+    ],
+    "url": "https://x.com/bcherny"
+  },
+  {
+    "id": "x-trq212",
+    "name": "Thariq / @trq212",
+    "kind": "x",
+    "products": [
+      "Claude Code"
+    ],
+    "url": "https://x.com/trq212"
+  },
+  {
+    "id": "x-catwu",
+    "name": "Cat / @_catwu",
+    "kind": "x",
+    "products": [
+      "Claude Code"
+    ],
+    "url": "https://x.com/_catwu"
+  },
+  {
+    "id": "x-alexalbert",
+    "name": "Alex Albert / @alexalbert__",
+    "kind": "x",
+    "products": [
+      "Anthropic",
+      "Claude"
+    ],
+    "url": "https://x.com/alexalbert__"
+  }
+]

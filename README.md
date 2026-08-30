@@ -8,10 +8,11 @@ AFreeCoder 的 Skill 唯一事实源：自建 Skill 源码 + 常用第三方 Ski
 
 ## 自建 Skill
 
-当前共收录 `5` 个自建 Skill，安装来源均为 `AFreeCoder/my-skills`：
+当前共收录 `6` 个自建 Skill，安装来源均为 `AFreeCoder/my-skills`：
 
 | Skill | 说明 |
 | --- | --- |
+| `ai-news-collect` | 本地采集 30 组 AI 官网、更新日志与 X 动态，保留原文并合并分类为中文简报。 |
 | `dev-flow` | Issue 驱动的开发流程：小任务全自动直通（创建 issue → 分析 → 实施 → 评审 → 发布），问题排查留档结论、修复与否由用户分流，大需求按阶段独立 issue 留档。 |
 | `knowledge-base-manager` | 管理本地 Markdown 知识库与飞书知识库的项目映射和内容双端一致性。 |
 | `push-deploy` | 通用发布门禁：审计发布历史、监控 CI/CD、核查备份与回滚准备并验证线上服务。 |
