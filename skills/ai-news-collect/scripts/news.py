@@ -13,9 +13,10 @@ from pathlib import Path
 import re
 import sys
 import uuid
-from urllib.parse import urljoin, urlsplit, urlunsplit
+from urllib.parse import urlencode, urljoin, urlsplit, urlunsplit
 from urllib.request import Request, urlopen
 import xml.etree.ElementTree as ET
+from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 SOURCES = Path(__file__).resolve().parents[1] / "references" / "sources.json"
 PRODUCTS = {"OpenAI", "Codex", "ChatGPT", "Anthropic", "Claude", "Claude Code"}
@@ -222,21 +223,123 @@ def page_record(source, text, url):
     return record(source, url, title, plain, kind="page", content_scope="page_snapshot"), tree
 
 
-def recent(items, days, limit):
-    cutoff = datetime.now(timezone.utc) - timedelta(days=days)
-    retained = [r for r in items if not date(r.get("published_at")) or date(r["published_at"]) >= cutoff]
+def time_window(args):
+    if getattr(args, "date", None):
+        start = datetime.strptime(args.date, "%Y-%m-%d").replace(tzinfo=ZoneInfo(args.timezone))
+        return start.astimezone(timezone.utc), (start + timedelta(days=1)).astimezone(timezone.utc)
+    return datetime.now(timezone.utc) - timedelta(days=args.days), datetime.now(timezone.utc)
+
+
+def recent(items, days, limit, start=None, end=None):
+    cutoff = start or datetime.now(timezone.utc) - timedelta(days=days)
+    retained = [r for r in items if not date(r.get("published_at")) or
+                (date(r["published_at"]) >= cutoff and (end is None or date(r["published_at"]) < end))]
     retained.sort(key=lambda r: date(r.get("published_at")) or datetime.min.replace(tzinfo=timezone.utc), reverse=True)
     return retained[:limit], len(retained) > limit
 
 
+def fxembed_records(source, payload, errors=None):
+    if payload.get("code") != 200 or not isinstance(payload.get("results"), list):
+        raise ValueError(f"FxEmbed 返回错误或缺少时间线：{str(payload)[:200]}")
+    result = []
+    for post in payload["results"]:
+        try:
+            if post.get("type") == "tombstone":
+                raise ValueError(f"帖子不可读取：{post.get('reason', 'unknown')}")
+            if post.get("type") != "status" or not post.get("url") or not isinstance(post.get("text"), str):
+                raise ValueError("FxEmbed 时间线包含无法识别的帖子结构")
+            published = date(post.get("created_at"))
+            if published is None and post.get("created_timestamp"):
+                published = datetime.fromtimestamp(post["created_timestamp"], timezone.utc)
+            result.append(record(source, post["url"], post["text"].split("\n")[0][:160] or post["url"],
+                                 post["text"], published.isoformat() if published else None,
+                                 kind="x_post", content_scope="fxembed_post", full_text_verified=False,
+                                 original_id=post.get("id"), author=(post.get("author") or {}).get("screen_name"),
+                                 is_note_tweet=post.get("is_note_tweet", False),
+                                 replying_to=post.get("replying_to"), quoted_post=post.get("quote"),
+                                 reposted_by=post.get("reposted_by"), media=post.get("media"),
+                                 links=(post.get("raw_text") or {}).get("facets", [])))
+        except (ValueError, TypeError, AttributeError, KeyError, OverflowError) as exc:
+            if errors is None:
+                raise ValueError(str(exc)) from exc
+            errors.append({"post_id": post.get("id") if isinstance(post, dict) else None,
+                           "url": post.get("url", source["url"]) if isinstance(post, dict) else source["url"],
+                           "error": str(exc)[:300]})
+    return result
+
+
+def acquire_fxembed(source, run, args):
+    raw = run / "raw" / source["id"]
+    start, end = time_window(args)
+    handle = urlsplit(source["url"]).path.strip("/")
+    records, attempts, cursors = {}, [], set()
+    cursor, stop, pages, parsed_pages = None, "page_limit", 0, 0
+    for _ in range(args.x_max_pages):
+        query = {"count": 100, "with_replies": 1}
+        if cursor:
+            query["cursor"] = cursor
+        endpoint = f"https://api.fxtwitter.com/2/profile/{handle}/statuses?{urlencode(query)}"
+        try:
+            body, _, raw_path = fetch(endpoint, raw, args.timeout)
+            pages += 1
+            if not body.strip():
+                # 仅接受实际 HTTP 204；空的 HTTP 200 不是“没有消息”。
+                metadata = json.loads(Path(raw_path).with_suffix(".json").read_text())
+                if metadata["status"] != 204:
+                    raise ValueError("FxEmbed 返回空正文，但 HTTP 状态不是 204")
+                stop = "exhausted"
+                break
+            payload = json.loads(body)
+            page_errors = []
+            page = fxembed_records(source, payload, page_errors)
+            parsed_pages += 1
+            attempts.extend(page_errors)
+            for item in page:
+                item["raw_path"] = raw_path
+                records[item["id"]] = item
+            retained, limited = recent(list(records.values()), args.days, args.limit, start, end)
+            if limited:
+                stop = "item_limit"
+                break
+            next_cursor = (payload.get("cursor") or {}).get("bottom")
+            if not next_cursor:
+                stop = "exhausted"
+                break
+            # 转发和回复上下文的原文日期不代表时间线位置；有这些条目时继续翻页。
+            dates = [date(item.get("published_at")) for item in page]
+            own_posts = all((item.get("author") or "").lower() == handle.lower()
+                            and not item.get("reposted_by") for item in page)
+            if dates and own_posts and not page_errors and all(d is not None and d < start for d in dates):
+                stop = "before_window"
+                break
+            if next_cursor in cursors:
+                attempts.append({"url": endpoint, "error": "分页游标重复，本轮停止以避免循环"})
+                stop = "repeated_cursor"
+                break
+            cursors.add(next_cursor)
+            cursor = next_cursor
+        except Exception as exc:
+            attempts.append({"url": endpoint, "error": str(exc)[:300]})
+            stop = "request_failed"
+            break
+    result, limited = recent(list(records.values()), args.days, args.limit, start, end)
+    limited = limited or stop in {"page_limit", "item_limit", "repeated_cursor"}
+    return result, {"source_id": source["id"], "name": source["name"],
+                    "status": ("partial" if parsed_pages else "failed") if attempts else "ok",
+                    "coverage": "fxembed_timeline_with_replies", "limited": limited,
+                    "items": len(result), "attempts": attempts, "pages": pages, "stop_reason": stop}
+
+
 def acquire(source, run, args):
+    if source["kind"] == "x" and getattr(args, "x_provider", "fxembed") == "fxembed":
+        return acquire_fxembed(source, run, args)
     raw = run / "raw" / source["id"]
     attempts, result = [], []
     for endpoint in source.get("endpoints", [source["url"]]):
         try:
             body, url, raw_path = fetch(endpoint, raw, args.timeout)
             if source["kind"] == "feed":
-                result, limited = recent(feed_records(source, body), args.days, args.limit)
+                result, limited = recent(feed_records(source, body), args.days, args.limit, *time_window(args))
                 coverage = "feed_window"
                 if source.get("article_body"):
                     for item in result:
@@ -247,7 +350,7 @@ def acquire(source, run, args):
                         except Exception as exc:
                             attempts.append({"url": item["url"], "error": str(exc)[:300], "retained": "feed_content"})
             elif source["kind"] == "x":
-                result, limited = recent(x_records(source, body), args.days, args.limit)
+                result, limited = recent(x_records(source, body), args.days, args.limit, *time_window(args))
                 coverage = "public_profile_snapshot"
             else:
                 item, tree = page_record(source, body, url)
@@ -335,20 +438,35 @@ def render(run, events_file):
     if covered != set(items):
         raise ValueError(f"尚有 {len(set(items) - covered)} 份材料没有处理去向")
     report = json.loads((run / "report.json").read_text())
-    lines = ["# AI 信息简报", "", f"采集批次：{run.name}；原始材料 {len(items)} 份；合并后 {len(payload['events'])} 个事件。", ""]
+    day = report["scope"].get("date")
+    title = f"# AI 信息简报 · {day}" if day else "# AI 信息简报"
+    lines = [title, "", f"采集批次：{run.name}；原始材料 {len(items)} 份；合并后 {len(payload['events'])} 个事件。", ""]
+    if day:
+        lines.extend([f"日期范围：{day} 00:00—24:00（{report['scope'].get('timezone', 'Asia/Shanghai')}）。网页日志按具体更新日期整理。", ""])
     for product, events in groups.items():
         lines.extend([f"## {product}", ""])
         for event in events:
             lines.extend([f"### {event['title']}", "", f"分类：{event['category']} · {' / '.join(event['products'])}", "", event["summary"], ""])
             for rid in dict.fromkeys(event["item_ids"]):
                 item = items[rid]
-                lines.append(f"- [{item['source_name']}]({item['url']}) · {item.get('published_at') or '日期未提取'}")
+                label = f"@{item['author']}" if item.get("author") else item["source_name"]
+                published = date(item.get("published_at"))
+                display_date = (published.astimezone(ZoneInfo(report['scope'].get('timezone', 'Asia/Shanghai'))).strftime("%Y-%m-%d %H:%M")
+                                if day and published else item.get("published_at") or "日期未提取")
+                lines.append(f"- [{label}]({item['url']}) · {display_date}")
             lines.append("")
-    lines.extend(["## 采集范围", "", f"参数：{json.dumps(report['scope'], ensure_ascii=False)}", "",
-                  "X 公开页面只覆盖本次页面返回的帖子，网页快照可能包含更早内容。", "",
-                  f"未纳入正文的材料：{len(payload.get('excluded', []))} 份，原因见 events.json。", ""])
+    lines.extend(["## 采集范围", "", f"本次检查 {len(report['sources'])} 组来源；参数、逐页记录与补充读取方式见 [采集报告](report.json)。", "",
+                  "X 覆盖范围以逐源报告为准；FxEmbed 包含接口返回的帖子与作者回复，网页快照可能包含更早内容。", "",
+                  f"未纳入正文的材料：{len(payload.get('excluded', []))} 份，原因见 [分类记录](events.json)。", "",
+                  "| 来源 | 状态 | 材料数 | 说明 |", "| --- | --- | --- | --- |"])
     for r in report["sources"]:
-        lines.append(f"- {r['name']}：{r['status']}，{r['items']} 份材料" + ("，达到本轮数量上限" if r.get("limited") else ""))
+        label = {"ok": "已读取", "partial": "部分读取", "failed": "未取得"}.get(r["status"], r["status"])
+        note = {"page_limit": "达到分页上限", "item_limit": "达到数量上限", "repeated_cursor": "上游分页游标重复"}.get(r.get("stop_reason"), "")
+        if r.get("limited") and not note:
+            note = "达到本轮上限"
+        if r.get("supplemented_by"):
+            note += "；网页工具补读" if note else "网页工具补读"
+        lines.append(f"| {r['name']} | {label} | {r['items']} | {note} |")
     dump(run / "events.json", payload)
     save(run / "brief.md", "\n".join(lines) + "\n")
     print(str(run / "brief.md"))
@@ -362,6 +480,10 @@ def main():
     collect.add_argument("--sources", type=Path, default=SOURCES)
     collect.add_argument("--only", help="逗号分隔的来源 ID")
     collect.add_argument("--days", type=int, default=7)
+    collect.add_argument("--date", help="只取指定日的 feed/X 消息，YYYY-MM-DD；覆盖 --days")
+    collect.add_argument("--timezone", default="Asia/Shanghai", help="--date 的 IANA 时区，默认 UTC+8")
+    collect.add_argument("--x-provider", choices=["fxembed", "public"], default="fxembed")
+    collect.add_argument("--x-max-pages", type=int, default=5, help="每个 X 账号的分页上限")
     collect.add_argument("--limit", type=int, default=20, help="每个 feed/X 的条数或列表页跟进文章数上限")
     collect.add_argument("--timeout", type=int, default=20)
     collect.add_argument("--workers", type=int, default=4)
@@ -378,8 +500,9 @@ def main():
         return
     sources = json.loads(args.sources.read_text())
     if args.command == "collect":
-        if min(args.days, args.limit, args.timeout, args.workers) < 1:
+        if min(args.days, args.limit, args.timeout, args.workers, args.x_max_pages) < 1:
             parser.error("数量、天数、超时和并发数必须为正整数")
+        time_window(args)
         if args.only:
             ids = set(args.only.split(","))
             if ids - {s["id"] for s in sources}:
@@ -404,7 +527,10 @@ def main():
                 for items, report in pool.map(lambda s: acquire(s, run, args), sources):
                     records.extend(items)
                     reports.append(report)
-            scope = {"mode": "public", "days": args.days, "limit_per_source": args.limit,
+            start, end = time_window(args)
+            scope = {"mode": "public", "days": args.days, "date": args.date, "timezone": args.timezone,
+                     "start": start.isoformat(), "end_exclusive": end.isoformat(),
+                     "x_provider": args.x_provider, "x_max_pages": args.x_max_pages, "limit_per_source": args.limit,
                      "selected_sources": len(sources), "page_dates": "由整理阶段检查，网页不按日期截断"}
         else:
             by_id = {s["id"]: s for s in sources}
@@ -432,6 +558,6 @@ def main():
 if __name__ == "__main__":
     try:
         main()
-    except (ValueError, KeyError, OSError, ET.ParseError) as exc:
+    except (ValueError, KeyError, OSError, ET.ParseError, ZoneInfoNotFoundError) as exc:
         print(f"错误：{exc}", file=sys.stderr)
         sys.exit(1)
